@@ -116,5 +116,49 @@ with tab1:
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
 
+# Aba 2: Ficha Resumida
+with tab2:
+    if planilha_ficha is not None and base_2024 is not None:
+        st.subheader("Ficha Resumida")
+
+        gerencias_ficha = base_2024.iloc[:, 0].unique()
+        gerencia_selecionada_ficha = st.selectbox("Selecione a Gerência", [""] + list(gerencias_ficha))
+
+        if gerencia_selecionada_ficha:
+            ficha_info = planilha_ficha[planilha_ficha['gerencia'] == gerencia_selecionada_ficha]
+
+            if ficha_info.empty:
+                st.warning("Nenhuma informação encontrada para a gerência selecionada.")
+            else:
+                st.markdown("### Informações da Gerência")
+                col1, col2, col3, col4 = st.columns(4)
+                col1.metric("Convidados", int(ficha_info['convidados'].iloc[0]))
+                col2.metric("Respondentes", int(ficha_info['Respondentes'].iloc[0]))
+                adesao = formatar_adesao(ficha_info['Adesão'].iloc[0])
+                col3.metric("Adesão (%)", f"{adesao:.2f}" if adesao is not None else "N/A")
+                col4.metric("Feedback", int(ficha_info['Feedback'].iloc[0]))
+
+                col5, col6, col7, col8 = st.columns(4)
+                col5.metric("ENPS 2023", int(ficha_info['ENPS 23'].iloc[0]))
+                col6.metric("ENPS 2024", int(ficha_info['ENPS 24'].iloc[0]))
+                col7.metric("IVR 2023", int(ficha_info['IVR 23'].iloc[0]))
+                col8.metric("IVR 2024", int(ficha_info['IVR 24'].iloc[0]))
+
+                col9, col10 = st.columns(2)
+                col9.metric("Retenção (%)", int(ficha_info['Retenção'].iloc[0]))
+
+# Aba 3: Comentários
+with tab3:
+    if planilha_adicional is not None:
+        st.write("### Dados dos Comentários")
+    else:
+        st.write("Carregue a planilha de comentários para começar.")
+
+# Aba 4: Sentimentos
+with tab4:
+    if planilha_sentimentos is not None:
+        st.write("### Dados de Sentimentos")
+    else:
+        st.write("Carregue a planilha de sentimentos para começar.")
 
 
