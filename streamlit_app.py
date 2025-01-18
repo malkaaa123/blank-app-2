@@ -147,11 +147,71 @@ with tab2:
                 col9, col10 = st.columns(2)
                 col9.metric("Retenção (%)", int(ficha_info['Retenção'].iloc[0]))
 
+                # Afirmativas Selecionadas
                 st.markdown("### Afirmativas Selecionadas")
-                todas_afirmativas = base_2024[base_2024.iloc[:, 0] == gerencia_selecionada_ficha].iloc[:, 1:]
-                for afirmativa, pontuacao in todas_afirmativas.iteritems():
-                    cor = "red" if pontuacao.iloc[0] < 50 else "orange" if pontuacao.iloc[0] < 70 else "green"
-                    st.markdown(f"<p style='color:{cor}'>{afirmativa}: {pontuacao.iloc[0]:.0f}</p>", unsafe_allow_html=True)
+                afirmativas_selecionadas = [
+                    "Este é um lugar psicológica e emocionalmente saudável para trabalhar",
+                    "Meu Gerente Executivo promove um ambiente seguro psicologicamente e emocionalmente",
+                    "A liderança sabe coordenar pessoas e distribuir tarefas adequadamente",
+                    "A empresa me oferece treinamento ou outras formas de desenvolvimento para o meu crescimento profissional",
+                    "A liderança deixa claras suas expectativas"
+                ]
+
+                afirmativas_info = base_2024[base_2024.iloc[:, 0] == gerencia_selecionada_ficha]
+
+                if not afirmativas_info.empty:
+                    col1, col2 = st.columns(2)
+                    afirmativas_positivas = []
+                    afirmativas_negativas = []
+
+                    for afirmativa in afirmativas_selecionadas:
+                        if afirmativa in afirmativas_info.columns:
+                            valor = afirmativas_info[afirmativa].iloc[0]
+                            if valor >= 70:
+                                afirmativas_positivas.append(f"**{afirmativa}: {valor:.0f}%**")
+                            else:
+                                afirmativas_negativas.append(f"**{afirmativa}: {valor:.0f}%**")
+
+                    # Afirmativas Positivas
+                    with col1:
+                        st.markdown("#### Afirmativas Positivas")
+                        for afirmativa in afirmativas_positivas:
+                            st.success(afirmativa)
+
+                    # Afirmativas Negativas
+                    with col2:
+                        st.markdown("#### Afirmativas Negativas")
+                        for afirmativa in afirmativas_negativas:
+                            st.error(afirmativa)
+
+                # Top 3 Maiores e Menores Pontuações
+                st.markdown("### Top 3 Maiores e Menores Pontuações")
+                pontuacoes = afirmativas_info.iloc[0, 1:].sort_values()
+                menores = pontuacoes.head(3)
+                maiores = pontuacoes.tail(3)
+
+                col3, col4 = st.columns(2)
+                with col3:
+                    st.markdown("#### Maiores Pontuações")
+                    for idx, val in maiores.items():
+                        st.success(f"**{idx}: {val:.0f}**")
+                with col4:
+                    st.markdown("#### Menores Pontuações")
+                    for idx, val in menores.items():
+                        st.error(f"**{idx}: {val:.0f}**")
+
+                # Exibição de todas as afirmativas
+                st.markdown("### Todas as Afirmativas da Gerência")
+                todas_afirmativas = afirmativas_info.iloc[:, 1:].transpose()
+                todas_afirmativas.columns = ["Pontuação"]
+                todas_afirmativas["Status"] = todas_afirmativas["Pontuação"].apply(
+                    lambda x: "Alta" if x >= 70 else "Média" if x >= 50 else "Baixa"
+                )
+                st.table(todas_afirmativas.style.format({"Pontuação": "{:.0f}"}).applymap(
+                    lambda v: "color: green;" if v == "Alta" else ("color: orange;" if v == "Média" else "color: red;"),
+                    subset=["Status"]
+                ))
+
 
 # Aba 3: Comentários
 with tab3:
