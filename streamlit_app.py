@@ -147,10 +147,83 @@ with tab2:
                 col9, col10 = st.columns(2)
                 col9.metric("Retenção (%)", int(ficha_info['Retenção'].iloc[0]))
 
+                st.markdown("### Afirmativas Selecionadas")
+                todas_afirmativas = base_2024[base_2024.iloc[:, 0] == gerencia_selecionada_ficha].iloc[:, 1:]
+                for afirmativa, pontuacao in todas_afirmativas.iteritems():
+                    cor = "red" if pontuacao.iloc[0] < 50 else "orange" if pontuacao.iloc[0] < 70 else "green"
+                    st.markdown(f"<p style='color:{cor}'>{afirmativa}: {pontuacao.iloc[0]:.0f}</p>", unsafe_allow_html=True)
+
 # Aba 3: Comentários
 with tab3:
     if planilha_adicional is not None:
         st.write("### Dados dos Comentários")
+
+        # Filtros de gerência, pergunta, palavra-chave e busca livre
+        gerencias_extra = planilha_adicional.iloc[:, 0].unique()
+        perguntas_extra = planilha_adicional.iloc[:, 1].unique()
+
+        selecionar_todas_gerencias_extra = st.checkbox("Selecionar Todas as Gerências", key="extra_gerencias")
+        if selecionar_todas_gerencias_extra:
+            gerencia_selecionada_extra = list(gerencias_extra)
+        else:
+            gerencia_selecionada_extra = st.multiselect("Selecione Gerências", gerencias_extra, default=[])
+
+        selecionar_todas_perguntas_extra = st.checkbox("Selecionar Todas as Perguntas")
+        if selecionar_todas_perguntas_extra:
+            pergunta_selecionada_extra = list(perguntas_extra)
+        else:
+            pergunta_selecionada_extra = st.multiselect("Selecione Perguntas", perguntas_extra, default=[])
+
+        # Filtro por palavra-chave
+        palavras_chave = {
+            "Assédio": ["assédio", "perseguição", "ameaça", "humilhação", "desrespeito", 
+                         "pressão", "discriminação", "abuso", "exploração", "horrível", 
+                         "odeio", "ignorado"],
+            "Desempenho": ["trabalho", "meta", "produtividade", "resultado"],
+        }
+
+        tema_selecionado = st.selectbox("Selecione um Tema de Palavra-Chave", ["Todos"] + list(palavras_chave.keys()))
+
+        # Busca livre por palavras-chave
+        busca_livre = st.text_input("Busca Livre por Palavras-Chave", value="")
+
+        # Filtrar os dados
+        if gerencia_selecionada_extra and pergunta_selecionada_extra:
+            planilha_filtrada = planilha_adicional[
+                (planilha_adicional.iloc[:, 0].isin(gerencia_selecionada_extra)) &
+                (planilha_adicional.iloc[:, 1].isin(pergunta_selecionada_extra))
+            ]
+
+            if tema_selecionado != "Todos":
+                palavras = palavras_chave[tema_selecionado]
+                planilha_filtrada = planilha_filtrada[planilha_filtrada.iloc[:, 2].str.contains(
+                    '|'.join(palavras), case=False, na=False
+                )]
+
+            if busca_livre:
+                planilha_filtrada = planilha_filtrada[planilha_filtrada.iloc[:, 2].str.contains(
+                    busca_livre, case=False, na=False
+                )]
+
+            # Exibir comentários como blocos expansíveis abertos
+            for index, row in planilha_filtrada.iterrows():
+                with st.expander(f"{row[1]} (Gerência: {row[0]})", expanded=True):
+                    st.write(row[2])
+
+            # Permitir download
+            @st.cache_data
+            def convert_df_extra(df):
+                return df.to_csv(index=False).encode('utf-8')
+
+            csv_extra = convert_df_extra(planilha_filtrada)
+            st.download_button(
+                label="Baixar Planilha Filtrada",
+                data=csv_extra,
+                file_name="comentarios_filtrados.csv",
+                mime="text/csv",
+            )
+        else:
+            st.write("Selecione pelo menos uma Gerência e uma Pergunta para visualizar os dados.")
     else:
         st.write("Carregue a planilha de comentários para começar.")
 
@@ -158,7 +231,39 @@ with tab3:
 with tab4:
     if planilha_sentimentos is not None:
         st.write("### Dados de Sentimentos")
+
+        # Filtro de gerências
+        gerencias_sentimentos = planilha_sentimentos['gerencia'].unique()
+
+        selecionar_todas_gerencias_sentimentos = st.checkbox("Selecionar Todas as Gerências", key="sentimentos_gerencias")
+        if selecionar_todas_gerencias_sentimentos:
+            gerencias_selecionadas_sentimentos = list(gerencias_sentimentos)
+        else:
+            gerencias_selecionadas_sentimentos = st.multiselect("Selecione Gerências", gerencias_sentimentos, default=[])
+
+        if gerencias_selecionadas_sentimentos:
+            # Filtrar dados por gerências selecionadas
+            sentimentos_filtrados = planilha_sentimentos[
+                planilha_sentimentos['gerencia'].isin(gerencias_selecionadas_sentimentos)
+            ]
+
+            # Exibir tabela
+            st.dataframe(sentimentos_filtrados, use_container_width=True)
+
+            # Permitir download
+            @st.cache_data
+            def convert_df_sentimentos(df):
+                return df.to_csv(index=False).encode('utf-8')
+
+            csv_sentimentos = convert_df_sentimentos(sentimentos_filtrados)
+            st.download_button(
+                label="Baixar Dados Filtrados de Sentimentos",
+                data=csv_sentimentos,
+                file_name="sentimentos_filtrados.csv",
+                mime="text/csv",
+            )
+        else:
+            st.write("Selecione pelo menos uma Gerência para visualizar os dados de sentimentos.")
     else:
         st.write("Carregue a planilha de sentimentos para começar.")
-
 
