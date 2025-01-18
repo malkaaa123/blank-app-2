@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 
+# Configuração de layout wide e título da página
+st.set_page_config(layout="wide", page_title="Análise de Clima Organizacional", page_icon="📊")
+
 # Título da aplicação
 st.title("Análise de Pesquisa de Clima Organizacional")
 
@@ -112,116 +115,6 @@ with tab1:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
-
-# Aba 2: Ficha Resumida
-with tab2:
-    if planilha_ficha is not None and base_2024 is not None:
-        st.subheader("Ficha Resumida")
-
-        gerencias_ficha = base_2024.iloc[:, 0].unique()
-        gerencia_selecionada_ficha = st.selectbox("Selecione a Gerência", [""] + list(gerencias_ficha))
-
-        if gerencia_selecionada_ficha:
-            ficha_info = planilha_ficha[planilha_ficha['gerencia'] == gerencia_selecionada_ficha]
-
-            if ficha_info.empty:
-                st.warning("Nenhuma informação encontrada para a gerência selecionada.")
-            else:
-                st.markdown("### Informações da Gerência")
-                col1, col2, col3, col4 = st.columns(4)
-                col1.metric("Convidados", int(ficha_info['convidados'].iloc[0]))
-                col2.metric("Respondentes", int(ficha_info['Respondentes'].iloc[0]))
-                adesao = formatar_adesao(ficha_info['Adesão'].iloc[0])
-                col3.metric("Adesão (%)", f"{adesao:.2f}" if adesao is not None else "N/A")
-                col4.metric("Feedback", int(ficha_info['Feedback'].iloc[0]))
-
-                col5, col6, col7, col8 = st.columns(4)
-                col5.metric("ENPS 2023", int(ficha_info['ENPS 23'].iloc[0]))
-                col6.metric("ENPS 2024", int(ficha_info['ENPS 24'].iloc[0]))
-                col7.metric("IVR 2023", int(ficha_info['IVR 23'].iloc[0]))
-                col8.metric("IVR 2024", int(ficha_info['IVR 24'].iloc[0]))
-
-                col9, col10 = st.columns(2)
-                col9.metric("Retenção (%)", int(ficha_info['Retenção'].iloc[0]))
-
-                # Afirmativas Selecionadas
-                st.markdown("### Afirmativas Selecionadas")
-                afirmativas_selecionadas = [
-                    "Este é um lugar psicológica e emocionalmente saudável para trabalhar",
-                    "Meu Gerente Executivo promove um ambiente seguro psicologicamente e emocionalmente",
-                    "A liderança sabe coordenar pessoas e distribuir tarefas adequadamente",
-                    "A empresa me oferece treinamento ou outras formas de desenvolvimento para o meu crescimento profissional",
-                    "A liderança deixa claras suas expectativas"
-                ]
-
-                afirmativas_info = base_2024[base_2024.iloc[:, 0] == gerencia_selecionada_ficha]
-
-                if not afirmativas_info.empty:
-                    col1, col2 = st.columns(2)
-                    afirmativas_positivas = []
-                    afirmativas_negativas = []
-
-                    for afirmativa in afirmativas_selecionadas:
-                        if afirmativa in afirmativas_info.columns:
-                            valor = afirmativas_info[afirmativa].iloc[0]
-                            if valor >= 70:
-                                afirmativas_positivas.append(f"**{afirmativa}: {valor:.0f}%**")
-                            else:
-                                afirmativas_negativas.append(f"**{afirmativa}: {valor:.0f}%**")
-
-                    # Afirmativas Positivas
-                    with col1:
-                        st.markdown("#### Afirmativas Positivas")
-                        for afirmativa in afirmativas_positivas:
-                            st.success(afirmativa)
-
-                    # Afirmativas Negativas
-                    with col2:
-                        st.markdown("#### Afirmativas Negativas")
-                        for afirmativa in afirmativas_negativas:
-                            st.error(afirmativa)
-
-                # Top 3 Maiores e Menores Pontuações
-                st.markdown("### Top 3 Maiores e Menores Pontuações")
-                pontuacoes = afirmativas_info.iloc[0, 1:].sort_values()
-                menores = pontuacoes.head(3)
-                maiores = pontuacoes.tail(3)
-
-                col3, col4 = st.columns(2)
-                with col3:
-                    st.markdown("#### Maiores Pontuações")
-                    for idx, val in maiores.items():
-                        st.success(f"**{idx}: {val:.0f}**")
-                with col4:
-                    st.markdown("#### Menores Pontuações")
-                    for idx, val in menores.items():
-                        st.error(f"**{idx}: {val:.0f}**")
-
-                # Exibição de todas as afirmativas
-                st.markdown("### Todas as Afirmativas da Gerência")
-                todas_afirmativas = afirmativas_info.iloc[:, 1:].transpose()
-                todas_afirmativas.columns = ["Pontuação"]
-                todas_afirmativas["Status"] = todas_afirmativas["Pontuação"].apply(
-                    lambda x: "Alta" if x >= 70 else "Média" if x >= 50 else "Baixa"
-                )
-                st.table(todas_afirmativas.style.format({"Pontuação": "{:.0f}"}).applymap(
-                    lambda v: "color: green;" if v == "Alta" else ("color: orange;" if v == "Média" else "color: red;"),
-                    subset=["Status"]
-                ))
-
-# Aba 3: Comentários
-with tab3:
-    if planilha_adicional is not None:
-        st.write("### Dados dos Comentários")
-    else:
-        st.write("Carregue a planilha de comentários para começar.")
-
-# Aba 4: Sentimentos
-with tab4:
-    if planilha_sentimentos is not None:
-        st.write("### Dados de Sentimentos")
-    else:
-        st.write("Carregue a planilha de sentimentos para começar.")
 
 
 
