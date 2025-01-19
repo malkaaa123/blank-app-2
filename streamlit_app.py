@@ -123,6 +123,7 @@ with tab1:
 
 
 
+
 # Aba 2: Ficha Resumida
 with tab2:
     if planilha_ficha is not None and base_2024 is not None:
