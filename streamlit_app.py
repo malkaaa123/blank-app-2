@@ -118,7 +118,7 @@ with tab1:
                 file_name="comparacao_indices.csv",
                 mime="text/csv",
             )
-              # Maiores Subidas e Quedas por Gerência
+               # Maiores Subidas e Quedas por Gerência
             st.write("### Maiores Subidas e Quedas por Gerência")
             for gerencia in gerencias_selecionadas:
                 if gerencia in base_2023_alinhada.index:
