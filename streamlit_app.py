@@ -47,104 +47,104 @@ tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", 
 
 # Aba 1: Comparação de Índices
 with tab1:
-   # Verificar se os dados foram carregados corretamente
+    # Verificar se os dados foram carregados corretamente
     if base_2023 is not None and base_2024 is not None:
-    st.write("### Dados da Comparação de Índices")
+        st.write("### Dados da Comparação de Índices")
 
-    # Obter gerências e afirmativas
-    gerencias = base_2023.iloc[:, 0].unique()
-    afirmativas = base_2023.columns[1:].tolist()
+        # Obter gerências e afirmativas
+        gerencias = base_2023.iloc[:, 0].unique()
+        afirmativas = base_2023.columns[1:].tolist()
 
-    selecionar_todas_gerencias = st.checkbox("Selecionar Todas as Gerências")
-    if selecionar_todas_gerencias:
-        gerencias_selecionadas = list(gerencias)
-    else:
-        gerencias_selecionadas = st.multiselect("Selecione Gerências", gerencias, default=[])
+        selecionar_todas_gerencias = st.checkbox("Selecionar Todas as Gerências")
+        if selecionar_todas_gerencias:
+            gerencias_selecionadas = list(gerencias)
+        else:
+            gerencias_selecionadas = st.multiselect("Selecione Gerências", gerencias, default=[])
 
-    selecionar_todas_afirmativas = st.checkbox("Selecionar Todas as Afirmativas")
-    if selecionar_todas_afirmativas:
-        afirmativas_selecionadas = afirmativas
-    else:
-        afirmativas_selecionadas = st.multiselect("Selecione Afirmativas", afirmativas, default=[])
+        selecionar_todas_afirmativas = st.checkbox("Selecionar Todas as Afirmativas")
+        if selecionar_todas_afirmativas:
+            afirmativas_selecionadas = afirmativas
+        else:
+            afirmativas_selecionadas = st.multiselect("Selecione Afirmativas", afirmativas, default=[])
 
-    anos_disponiveis = ["2023", "2024"]
-    anos_selecionados = st.multiselect("Selecione Anos", anos_disponiveis, default=anos_disponiveis)
+        anos_disponiveis = ["2023", "2024"]
+        anos_selecionados = st.multiselect("Selecione Anos", anos_disponiveis, default=anos_disponiveis)
 
-    if gerencias_selecionadas and afirmativas_selecionadas and anos_selecionados:
-        # Filtrar os dados
-        base_2023_filtrada = base_2023[base_2023.iloc[:, 0].isin(gerencias_selecionadas)]
-        base_2023_filtrada = base_2023_filtrada[[base_2023.columns[0]] + afirmativas_selecionadas]
+        if gerencias_selecionadas and afirmativas_selecionadas and anos_selecionados:
+            # Filtrar os dados
+            base_2023_filtrada = base_2023[base_2023.iloc[:, 0].isin(gerencias_selecionadas)]
+            base_2023_filtrada = base_2023_filtrada[[base_2023.columns[0]] + afirmativas_selecionadas]
 
-        base_2024_filtrada = base_2024[base_2024.iloc[:, 0].isin(gerencias_selecionadas)]
-        base_2024_filtrada = base_2024_filtrada[[base_2024.columns[0]] + afirmativas_selecionadas]
+            base_2024_filtrada = base_2024[base_2024.iloc[:, 0].isin(gerencias_selecionadas)]
+            base_2024_filtrada = base_2024_filtrada[[base_2024.columns[0]] + afirmativas_selecionadas]
 
-        # Transpor os dados para comparação
-        base_2023_transposta = base_2023_filtrada.set_index(base_2023_filtrada.columns[0]).transpose()
-        base_2024_transposta = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]).transpose()
+            # Transpor os dados para comparação
+            base_2023_transposta = base_2023_filtrada.set_index(base_2023_filtrada.columns[0]).transpose()
+            base_2024_transposta = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]).transpose()
 
-        base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
-        base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
+            base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
+            base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
 
-        comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
+            comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
 
-        # Reorganizar colunas
-        gerencias_colunas = sorted(set(col.split('(')[0].strip() for col in comparacao.columns))
-        colunas_ordenadas = []
-        for gerencia in gerencias_colunas:
-            colunas_ordenadas.extend(
-                [col for col in comparacao.columns if col.startswith(gerencia)]
+            # Reorganizar colunas
+            gerencias_colunas = sorted(set(col.split('(')[0].strip() for col in comparacao.columns))
+            colunas_ordenadas = []
+            for gerencia in gerencias_colunas:
+                colunas_ordenadas.extend(
+                    [col for col in comparacao.columns if col.startswith(gerencia)]
+                )
+            comparacao = comparacao[colunas_ordenadas]
+
+            # Substituir valores inválidos e garantir consistência
+            comparacao.replace("**", 0, inplace=True)
+            comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
+
+            st.write("### Tabela Comparativa")
+            st.dataframe(comparacao, use_container_width=False, height=600)
+
+            @st.cache_data
+            def convert_df(df):
+                return df.to_csv(index=True).encode('utf-8')
+
+            csv = convert_df(comparacao)
+            st.download_button(
+                label="Baixar Comparação em CSV",
+                data=csv,
+                file_name="comparacao_indices.csv",
+                mime="text/csv",
             )
-        comparacao = comparacao[colunas_ordenadas]
 
-        # Substituir valores inválidos e garantir consistência
-        comparacao.replace("**", 0, inplace=True)
-        comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
+            # Cálculo de subidas e quedas
+            st.write("### Maiores Subidas e Quedas por Gerência")
+            deltas = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]) - base_2023_filtrada.set_index(base_2023_filtrada.columns[0])
 
-        st.write("### Tabela Comparativa")
-        st.dataframe(comparacao, use_container_width=False, height=600)
+            for gerencia in gerencias_selecionadas:
+                if gerencia in deltas.index:
+                    deltas_gerencia = deltas.loc[gerencia]
 
-        @st.cache_data
-        def convert_df(df):
-            return df.to_csv(index=True).encode('utf-8')
+                    # Garantir que apenas valores numéricos sejam considerados
+                    deltas_gerencia = pd.to_numeric(deltas_gerencia, errors='coerce').dropna()
 
-        csv = convert_df(comparacao)
-        st.download_button(
-            label="Baixar Comparação em CSV",
-            data=csv,
-            file_name="comparacao_indices.csv",
-            mime="text/csv",
-        )
+                    # Calcular as 5 maiores subidas e quedas
+                    maiores_quedas = deltas_gerencia.nsmallest(5)
+                    maiores_subidas = deltas_gerencia.nlargest(5)
 
-        # Cálculo de subidas e quedas
-        st.write("### Maiores Subidas e Quedas por Gerência")
-        deltas = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]) - base_2023_filtrada.set_index(base_2023_filtrada.columns[0])
+                    st.subheader(f"Gerência: {gerencia}")
 
-        for gerencia in gerencias_selecionadas:
-            if gerencia in deltas.index:
-                deltas_gerencia = deltas.loc[gerencia]
+                    # Exibir maiores quedas
+                    st.markdown("#### Maiores Quedas")
+                    for afirmativa, delta in maiores_quedas.items():
+                        st.error(f"**{afirmativa}**: -{abs(round(delta))}%")
 
-                # Garantir que apenas valores numéricos sejam considerados
-                deltas_gerencia = pd.to_numeric(deltas_gerencia, errors='coerce').dropna()
-
-                # Calcular as 5 maiores subidas e quedas
-                maiores_quedas = deltas_gerencia.nsmallest(5)
-                maiores_subidas = deltas_gerencia.nlargest(5)
-
-                st.subheader(f"Gerência: {gerencia}")
-
-                # Exibir maiores quedas
-                st.markdown("#### Maiores Quedas")
-                for afirmativa, delta in maiores_quedas.items():
-                    st.error(f"**{afirmativa}**: -{abs(round(delta))}%")
-
-                # Exibir maiores subidas
-                st.markdown("#### Maiores Subidas")
-                for afirmativa, delta in maiores_subidas.items():
-                    st.success(f"**{afirmativa}**: +{round(delta)}%")
+                    # Exibir maiores subidas
+                    st.markdown("#### Maiores Subidas")
+                    for afirmativa, delta in maiores_subidas.items():
+                        st.success(f"**{afirmativa}**: +{round(delta)}%")
+        else:
+            st.warning("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
-        st.warning("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
-else:
-    st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+        st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
 
 
 # Aba 2: Ficha Resumida
