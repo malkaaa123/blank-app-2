@@ -1,54 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-# Configuração de layout wide e título da página
-st.set_page_config(layout="wide", page_title="Análise de Clima Organizacional", page_icon="📊")
-
-# Título da aplicação
-st.title("Análise de Pesquisa de Clima Organizacional")
-
-# Upload das planilhas
-st.sidebar.header("Carregue as Planilhas")
-base_2023_file = st.sidebar.file_uploader("Upload Planilha 2023", type=["xlsx", "csv"])
-base_2024_file = st.sidebar.file_uploader("Upload Planilha 2024", type=["xlsx", "csv"])
-aba_extra_file = st.sidebar.file_uploader("Upload Planilha de Comentários", type=["xlsx", "csv"])
-sentimentos_file = st.sidebar.file_uploader("Upload Planilha de Sentimentos", type=["xlsx", "csv"])
-ficha_file = st.sidebar.file_uploader("Upload Planilha Ficha", type=["xlsx", "csv"])
-
-# Variáveis para armazenar os dados
-base_2023 = None
-base_2024 = None
-planilha_adicional = None
-planilha_sentimentos = None
-planilha_ficha = None
-
-if base_2023_file:
-    base_2023 = pd.read_excel(base_2023_file) if base_2023_file.name.endswith('xlsx') else pd.read_csv(base_2023_file)
-if base_2024_file:
-    base_2024 = pd.read_excel(base_2024_file) if base_2024_file.name.endswith('xlsx') else pd.read_csv(base_2024_file)
-if aba_extra_file:
-    planilha_adicional = pd.read_excel(aba_extra_file) if aba_extra_file.name.endswith('xlsx') else pd.read_csv(aba_extra_file)
-if sentimentos_file:
-    planilha_sentimentos = pd.read_excel(sentimentos_file) if sentimentos_file.name.endswith('xlsx') else pd.read_csv(sentimentos_file)
-if ficha_file:
-    planilha_ficha = pd.read_excel(ficha_file) if ficha_file.name.endswith('xlsx') else pd.read_csv(ficha_file)
-
-# Função para tratar valores de adesão como porcentagem
-def formatar_adesao(valor):
-    try:
-        if isinstance(valor, str) and '%' in valor:
-            return float(valor.replace('%', '').strip())
-        return float(valor)
-    except:
-        return None
-
-# Criação de abas (com "Ficha Resumida" como a segunda aba)
-tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Comentários", "Sentimentos"])
-
-import streamlit as st
-import pandas as pd
-
-# Configuração de layout wide e título da página
+# Configuração de layout wide e título da página (PRIMEIRO COMANDO DE STREAMLIT)
 st.set_page_config(layout="wide", page_title="Análise de Clima Organizacional", page_icon="📊")
 
 # Título da aplicação
@@ -142,16 +95,8 @@ with tab1:
             comparacao.replace("**", 0, inplace=True)
             comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
 
-            def highlight_and_center(val):
-                color = 'color: red;' if val < 70 else ''
-                return f"{color} text-align: center;"
-
-            styled_comparacao = comparacao.style.applymap(highlight_and_center).set_table_styles([
-                dict(selector='th', props=[('text-align', 'center')])
-            ])
-
             st.write("### Tabela Comparativa")
-            st.dataframe(styled_comparacao, use_container_width=False, height=600)
+            st.dataframe(comparacao, use_container_width=False, height=600)
 
             @st.cache_data
             def convert_df(df):
