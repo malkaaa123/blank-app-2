@@ -66,29 +66,32 @@ with tab1:
         else:
             afirmativas_selecionadas = st.multiselect("Selecione Afirmativas", afirmativas, default=[])
 
-        anos_disponiveis = ["2023", "2024"]
-        anos_selecionados = st.multiselect("Selecione Anos", anos_disponiveis, default=anos_disponiveis)
-
-        if gerencias_selecionadas and afirmativas_selecionadas and anos_selecionados:
+        if gerencias_selecionadas and afirmativas_selecionadas:
             base_2023_filtrada = base_2023[base_2023.iloc[:, 0].isin(gerencias_selecionadas)]
             base_2023_filtrada = base_2023_filtrada[[base_2023.columns[0]] + afirmativas_selecionadas]
 
             base_2024_filtrada = base_2024[base_2024.iloc[:, 0].isin(gerencias_selecionadas)]
             base_2024_filtrada = base_2024_filtrada[[base_2024.columns[0]] + afirmativas_selecionadas]
 
-            base_2023_transposta = base_2023_filtrada.set_index(base_2023_filtrada.columns[0]).transpose()
-            base_2024_transposta = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]).transpose()
+            # Criar estrutura ordenada por gerência primeiro
+            comparacao = pd.DataFrame()
+            for gerencia in gerencias_selecionadas:
+                dados_2023 = base_2023_filtrada[base_2023_filtrada.iloc[:, 0] == gerencia].set_index(base_2023_filtrada.columns[0])
+                dados_2024 = base_2024_filtrada[base_2024_filtrada.iloc[:, 0] == gerencia].set_index(base_2024_filtrada.columns[0])
 
-            base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
-            base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
+                dados_2023.columns = [f"{col} (2023)" for col in dados_2023.columns]
+                dados_2024.columns = [f"{col} (2024)" for col in dados_2024.columns]
 
-            comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
+                gerencia_comparacao = pd.concat([dados_2023, dados_2024], axis=1)
+                gerencia_comparacao["Gerência"] = gerencia
 
-            colunas_selecionadas = [col for col in comparacao.columns if any(ano in col for ano in anos_selecionados)]
-            comparacao = comparacao[colunas_selecionadas]
+                comparacao = pd.concat([comparacao, gerencia_comparacao])
 
-            comparacao.replace("**", 0, inplace=True)
-            comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
+            comparacao = comparacao.reset_index()
+
+            # Reordenar colunas para colocar "Gerência" e índice no início
+            cols = ["Gerência"] + [col for col in comparacao.columns if col != "Gerência"]
+            comparacao = comparacao[cols]
 
             def highlight_and_center(val):
                 color = 'color: red;' if val < 70 else ''
@@ -103,7 +106,7 @@ with tab1:
 
             @st.cache_data
             def convert_df(df):
-                return df.to_csv(index=True).encode('utf-8')
+                return df.to_csv(index=False).encode('utf-8')
 
             csv = convert_df(comparacao)
             st.download_button(
@@ -113,7 +116,7 @@ with tab1:
                 mime="text/csv",
             )
         else:
-            st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
+            st.write("Selecione pelo menos uma Gerência e uma Afirmativa para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
 
