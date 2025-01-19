@@ -11,18 +11,39 @@ st.title("Análise de Pesquisa de Clima Organizacional")
 st.sidebar.header("Carregue as Planilhas")
 base_2023_file = st.sidebar.file_uploader("Upload Planilha 2023", type=["xlsx", "csv"])
 base_2024_file = st.sidebar.file_uploader("Upload Planilha 2024", type=["xlsx", "csv"])
+aba_extra_file = st.sidebar.file_uploader("Upload Planilha de Comentários", type=["xlsx", "csv"])
+sentimentos_file = st.sidebar.file_uploader("Upload Planilha de Sentimentos", type=["xlsx", "csv"])
+ficha_file = st.sidebar.file_uploader("Upload Planilha Ficha", type=["xlsx", "csv"])
 
 # Variáveis para armazenar os dados
 base_2023 = None
 base_2024 = None
+planilha_adicional = None
+planilha_sentimentos = None
+planilha_ficha = None
 
 if base_2023_file:
     base_2023 = pd.read_excel(base_2023_file) if base_2023_file.name.endswith('xlsx') else pd.read_csv(base_2023_file)
 if base_2024_file:
     base_2024 = pd.read_excel(base_2024_file) if base_2024_file.name.endswith('xlsx') else pd.read_csv(base_2024_file)
+if aba_extra_file:
+    planilha_adicional = pd.read_excel(aba_extra_file) if aba_extra_file.name.endswith('xlsx') else pd.read_csv(aba_extra_file)
+if sentimentos_file:
+    planilha_sentimentos = pd.read_excel(sentimentos_file) if sentimentos_file.name.endswith('xlsx') else pd.read_csv(sentimentos_file)
+if ficha_file:
+    planilha_ficha = pd.read_excel(ficha_file) if ficha_file.name.endswith('xlsx') else pd.read_csv(ficha_file)
+
+# Função para tratar valores de adesão como porcentagem
+def formatar_adesao(valor):
+    try:
+        if isinstance(valor, str) and '%' in valor:
+            return float(valor.replace('%', '').strip())
+        return float(valor)
+    except:
+        return None
 
 # Criação de abas
-tab1, tab2 = st.tabs(["Comparação de Índices", "Ficha Resumida"])
+tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Comentários", "Sentimentos"])
 
 # Aba 1: Comparação de Índices
 with tab1:
@@ -54,45 +75,46 @@ with tab1:
             base_2024_filtrada = base_2024[base_2024.iloc[:, 0].isin(gerencias_selecionadas)]
             base_2024_filtrada = base_2024_filtrada[[base_2024.columns[0]] + afirmativas_selecionadas]
 
-            base_2023_alinhada = base_2023_filtrada.set_index(base_2023_filtrada.columns[0])
-            base_2024_alinhada = base_2024_filtrada.set_index(base_2024_filtrada.columns[0])
+            base_2023_transposta = base_2023_filtrada.set_index(base_2023_filtrada.columns[0]).transpose()
+            base_2024_transposta = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]).transpose()
 
-            # Cálculo das diferenças entre 2023 e 2024
-            deltas = base_2024_alinhada - base_2023_alinhada
+            base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
+            base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
 
-            # Exibir Tabela Comparativa
-            st.write("### Tabela Comparativa por Afirmativas")
-            comparacao = pd.concat([base_2023_alinhada.add_suffix(" (2023)"), base_2024_alinhada.add_suffix(" (2024)")], axis=1)
-            st.dataframe(comparacao, use_container_width=True)
+            comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
 
-            # Exibir Maiores Subidas e Quedas por Gerência
-            st.write("### Maiores Subidas e Quedas por Gerência")
-            for gerencia in gerencias_selecionadas:
-                if gerencia in base_2023_alinhada.index:
-                    deltas_gerencia = deltas.loc[gerencia]
+            # Reorganizar as colunas para agrupar gerências com seus anos
+            gerencias_colunas = sorted(set(col.split('(')[0].strip() for col in comparacao.columns))
+            colunas_ordenadas = []
+            for gerencia in gerencias_colunas:
+                colunas_ordenadas.extend(
+                    [col for col in comparacao.columns if col.startswith(gerencia)]
+                )
+            comparacao = comparacao[colunas_ordenadas]
 
-                    # Garantir que apenas valores numéricos sejam considerados
-                    deltas_gerencia = pd.to_numeric(deltas_gerencia, errors='coerce').dropna()
+            comparacao.replace("**", 0, inplace=True)
+            comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
 
-                    # Calcular as 5 maiores subidas e quedas
-                    maiores_quedas = deltas_gerencia.nsmallest(5)
-                    maiores_subidas = deltas_gerencia.nlargest(5)
+            st.write("### Tabela Comparativa")
+            st.dataframe(comparacao, use_container_width=False, height=600)
 
-                    st.subheader(f"Gerência: {gerencia}")
+            @st.cache_data
+            def convert_df(df):
+                return df.to_csv(index=True).encode('utf-8')
 
-                    # Exibir maiores quedas
-                    st.markdown("#### Maiores Quedas")
-                    for afirmativa, delta in maiores_quedas.items():
-                        st.error(f"**{afirmativa}**: -{abs(round(delta))}%")
+            csv = convert_df(comparacao)
+            st.download_button(
+                label="Baixar Comparação em CSV",
+                data=csv,
+                file_name="comparacao_indices.csv",
+                mime="text/csv",
+            )
 
-                    # Exibir maiores subidas
-                    st.markdown("#### Maiores Subidas")
-                    for afirmativa, delta in maiores_subidas.items():
-                        st.success(f"**{afirmativa}**: +{round(delta)}%")
         else:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
 
 # Aba 2: Ficha Resumida
 
