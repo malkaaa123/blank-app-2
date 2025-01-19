@@ -76,29 +76,19 @@ with tab1:
             base_2024_filtrada = base_2024[base_2024.iloc[:, 0].isin(gerencias_selecionadas)]
             base_2024_filtrada = base_2024_filtrada[[base_2024.columns[0]] + afirmativas_selecionadas]
 
-            # Criar estrutura ordenada por gerência primeiro
-            comparacao = pd.DataFrame()
-            for gerencia in gerencias_selecionadas:
-                dados_2023 = base_2023_filtrada[base_2023_filtrada.iloc[:, 0] == gerencia].set_index(base_2023_filtrada.columns[0])
-                dados_2024 = base_2024_filtrada[base_2024_filtrada.iloc[:, 0] == gerencia].set_index(base_2024_filtrada.columns[0])
+            base_2023_transposta = base_2023_filtrada.set_index(base_2023_filtrada.columns[0]).transpose()
+            base_2024_transposta = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]).transpose()
 
-                dados_2023.columns = [f"{col} (2023)" for col in dados_2023.columns]
-                dados_2024.columns = [f"{col} (2024)" for col in dados_2024.columns]
+            base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
+            base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
 
-                gerencia_comparacao = pd.concat([dados_2023, dados_2024], axis=1)
-                gerencia_comparacao["Gerência"] = gerencia
+            comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
 
-                comparacao = pd.concat([comparacao, gerencia_comparacao])
-
-            comparacao = comparacao.reset_index()
-
-            # Reordenar colunas para colocar "Gerência" e índice no início
-            cols = ["Gerência"] + [col for col in comparacao.columns if col != "Gerência"]
-            comparacao = comparacao[cols]
-
-            # Filtrar anos selecionados
-            colunas_selecionadas = ["Gerência"] + [col for col in comparacao.columns if any(ano in col for ano in anos_selecionados)]
+            colunas_selecionadas = [col for col in comparacao.columns if any(ano in col for ano in anos_selecionados)]
             comparacao = comparacao[colunas_selecionadas]
+
+            comparacao.replace("**", 0, inplace=True)
+            comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
 
             def highlight_and_center(val):
                 try:
@@ -117,7 +107,7 @@ with tab1:
 
             @st.cache_data
             def convert_df(df):
-                return df.to_csv(index=False).encode('utf-8')
+                return df.to_csv(index=True).encode('utf-8')
 
             csv = convert_df(comparacao)
             st.download_button(
