@@ -84,8 +84,13 @@ with tab1:
 
             comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
 
-            # Ordenar colunas por ano primeiro e depois por gerência
-            colunas_ordenadas = sorted(comparacao.columns, key=lambda x: (x.split('(')[1], x.split('(')[0]))
+            # Reorganizar as colunas para agrupar gerências com seus anos
+            gerencias_colunas = sorted(set(col.split('(')[0].strip() for col in comparacao.columns))
+            colunas_ordenadas = []
+            for gerencia in gerencias_colunas:
+                colunas_ordenadas.extend(
+                    [col for col in comparacao.columns if col.startswith(gerencia)]
+                )
             comparacao = comparacao[colunas_ordenadas]
 
             comparacao.replace("**", 0, inplace=True)
@@ -117,6 +122,7 @@ with tab1:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
 
 
 # Aba 2: Ficha Resumida
