@@ -46,7 +46,6 @@ def formatar_adesao(valor):
 tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Comentários", "Sentimentos"])
 
 # Aba 1: Comparação de Índices
-# Aba 1: Comparação de Índices
 with tab1:
     if base_2023 is not None and base_2024 is not None:
         st.write("### Dados da Comparação de Índices")
@@ -76,60 +75,19 @@ with tab1:
             base_2024_filtrada = base_2024[base_2024.iloc[:, 0].isin(gerencias_selecionadas)]
             base_2024_filtrada = base_2024_filtrada[[base_2024.columns[0]] + afirmativas_selecionadas]
 
-            base_2023_transposta = base_2023_filtrada.set_index(base_2023_filtrada.columns[0]).transpose()
-            base_2024_transposta = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]).transpose()
-
-            base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
-            base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
-
-            comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
-
-            # Reorganizar as colunas para agrupar gerências com seus anos
-            gerencias_colunas = sorted(set(col.split('(')[0].strip() for col in comparacao.columns))
-            colunas_ordenadas = []
-            for gerencia in gerencias_colunas:
-                colunas_ordenadas.extend(
-                    [col for col in comparacao.columns if col.startswith(gerencia)]
-                )
-            comparacao = comparacao[colunas_ordenadas]
-
-            comparacao.replace("**", 0, inplace=True)
-            comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
-
-            def highlight_and_center(val):
-                color = 'color: red;' if val < 70 else ''
-                return f"{color} text-align: center;"
-
-            styled_comparacao = comparacao.style.applymap(highlight_and_center).set_table_styles([
-                dict(selector='th', props=[('text-align', 'center')])
-            ])
-
-            st.write("### Tabela Comparativa")
-            st.dataframe(styled_comparacao, use_container_width=False, height=600)
-
-            @st.cache_data
-            def convert_df(df):
-                return df.to_csv(index=True).encode('utf-8')
-
-            csv = convert_df(comparacao)
-            st.download_button(
-                label="Baixar Comparação em CSV",
-                data=csv,
-                file_name="comparacao_indices.csv",
-                mime="text/csv",
-            )
-
-            # Garantir que os DataFrames tenham os mesmos índices e colunas antes de calcular deltas
+            # Garantir alinhamento de índices e colunas
             base_2023_alinhada = base_2023_filtrada.set_index(base_2023_filtrada.columns[0]).sort_index()
             base_2024_alinhada = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]).sort_index()
-
-            # Garantir alinhamento das colunas
             colunas_comuns = base_2023_alinhada.columns.intersection(base_2024_alinhada.columns)
             base_2023_alinhada = base_2023_alinhada[colunas_comuns]
             base_2024_alinhada = base_2024_alinhada[colunas_comuns]
 
             # Cálculo das diferenças entre 2023 e 2024
             deltas = base_2024_alinhada - base_2023_alinhada
+
+            st.write("### Tabela Comparativa por Afirmativas")
+            comparacao = pd.concat([base_2023_alinhada, base_2024_alinhada], keys=["2023", "2024"], axis=1)
+            st.dataframe(comparacao, use_container_width=False, height=600)
 
             st.write("### Maiores Subidas e Quedas por Gerência")
             for gerencia in gerencias_selecionadas:
@@ -143,31 +101,51 @@ with tab1:
                     maiores_quedas = deltas_gerencia.nsmallest(5)
                     maiores_subidas = deltas_gerencia.nlargest(5)
 
+                    # Exibir tabelas com subidas e quedas
+                    st.subheader(f"Gerência: {gerencia}")
+                    tabelas = [
+                        {"Tipo": "Queda", "Afirmativa": afirmativa, "Diferença (%)": round(delta)}
+                        for afirmativa, delta in maiores_quedas.items()
+                    ] + [
+                        {"Tipo": "Subida", "Afirmativa": afirmativa, "Diferença (%)": round(delta)}
+                        for afirmativa, delta in maiores_subidas.items()
+                    ]
+
+                    df_tabelas = pd.DataFrame(tabelas)
+
+                    # Exibir tabela estilizada
+                    st.table(df_tabelas.style.format({"Diferença (%)": "{:.0f}%"}))
+
+            st.write("### Destaques por Gerência (Opcional)")
+            for gerencia in gerencias_selecionadas:
+                if gerencia in base_2023_alinhada.index:
+                    deltas_gerencia = deltas.loc[gerencia]
+
+                    # Garantir que apenas valores numéricos sejam considerados
+                    deltas_gerencia = pd.to_numeric(deltas_gerencia, errors='coerce').dropna()
+
+                    # Destacar a maior queda e maior subida
+                    maior_queda = deltas_gerencia.nsmallest(1)
+                    maior_subida = deltas_gerencia.nlargest(1)
+
                     st.subheader(f"Gerência: {gerencia}")
                     col1, col2 = st.columns(2)
 
-                    # Exibir maiores quedas
                     with col1:
-                        st.markdown("#### Maiores Quedas")
-                        for afirmativa, delta in maiores_quedas.items():
-                            valor_2023 = round(base_2023_alinhada.at[gerencia, afirmativa])
-                            valor_2024 = round(base_2024_alinhada.at[gerencia, afirmativa])
-                            st.error(f"**{afirmativa}**: -{round(delta)}% (2023: {valor_2023}%, 2024: {valor_2024}%)")
+                        st.markdown("#### Maior Queda")
+                        for afirmativa, delta in maior_queda.items():
+                            st.error(f"**{afirmativa}**: -{round(delta)}%")
 
-                    # Exibir maiores subidas
                     with col2:
-                        st.markdown("#### Maiores Subidas")
-                        for afirmativa, delta in maiores_subidas.items():
-                            valor_2023 = round(base_2023_alinhada.at[gerencia, afirmativa])
-                            valor_2024 = round(base_2024_alinhada.at[gerencia, afirmativa])
-                            st.success(f"**{afirmativa}**: +{round(delta)}% (2023: {valor_2023}%, 2024: {valor_2024}%)")
+                        st.markdown("#### Maior Subida")
+                        for afirmativa, delta in maior_subida.items():
+                            st.success(f"**{afirmativa}**: +{round(delta)}%")
 
         else:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
 
-# Aba 2: Ficha Resumida
 with tab2:
     if planilha_ficha is not None and base_2024 is not None:
         st.subheader("Ficha Resumida")
