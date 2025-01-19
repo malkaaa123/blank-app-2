@@ -46,8 +46,7 @@ def formatar_adesao(valor):
 tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Comentários", "Sentimentos"])
 
 # Aba 1: Comparação de Índices
-with tab1:
-    if base_2023 is not None and base_2024 is not None:
+ if base_2023 is not None and base_2024 is not None:
         st.write("### Dados da Comparação de Índices")
 
         gerencias = base_2023.iloc[:, 0].unique()
@@ -75,34 +74,48 @@ with tab1:
             base_2024_filtrada = base_2024[base_2024.iloc[:, 0].isin(gerencias_selecionadas)]
             base_2024_filtrada = base_2024_filtrada[[base_2024.columns[0]] + afirmativas_selecionadas]
 
-            # Garantir alinhamento de índices e colunas
-            base_2023_alinhada = base_2023_filtrada.set_index(base_2023_filtrada.columns[0]).sort_index()
-            base_2024_alinhada = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]).sort_index()
-            colunas_comuns = base_2023_alinhada.columns.intersection(base_2024_alinhada.columns)
-            base_2023_alinhada = base_2023_alinhada[colunas_comuns]
-            base_2024_alinhada = base_2024_alinhada[colunas_comuns]
+            base_2023_transposta = base_2023_filtrada.set_index(base_2023_filtrada.columns[0]).transpose()
+            base_2024_transposta = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]).transpose()
 
-            # Cálculo das diferenças entre 2023 e 2024
-            deltas = base_2024_alinhada - base_2023_alinhada
+            base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
+            base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
 
-           # Corrigir a Tabela Comparativa por Afirmativas
-            st.write("### Tabela Comparativa por Afirmativas")
-            
-            # Criar DataFrame comparativo
-            comparacao = base_2023_alinhada.add_suffix(" (2023)").reset_index()
-            for col in base_2024_alinhada.columns:
-                comparacao[f"{col} (2024)"] = base_2024_alinhada[col].values
-            
-            # Garantir que todos os valores são numéricos e limpar o DataFrame
-            comparacao = comparacao.apply(pd.to_numeric, errors="coerce", axis=1).fillna(0)
-            
-            # Garantir que os nomes das colunas sejam simples strings
-            comparacao.columns = [str(col) for col in comparacao.columns]
-            
-            # Exibir o DataFrame no Streamlit
-            st.dataframe(comparacao, use_container_width=True, height=600)
+            comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
 
+            # Reorganizar as colunas para agrupar gerências com seus anos
+            gerencias_colunas = sorted(set(col.split('(')[0].strip() for col in comparacao.columns))
+            colunas_ordenadas = []
+            for gerencia in gerencias_colunas:
+                colunas_ordenadas.extend(
+                    [col for col in comparacao.columns if col.startswith(gerencia)]
+                )
+            comparacao = comparacao[colunas_ordenadas]
 
+            comparacao.replace("**", 0, inplace=True)
+            comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
+
+            def highlight_and_center(val):
+                color = 'color: red;' if val < 70 else ''
+                return f"{color} text-align: center;"
+
+            styled_comparacao = comparacao.style.applymap(highlight_and_center).set_table_styles([
+                dict(selector='th', props=[('text-align', 'center')])
+            ])
+
+            st.write("### Tabela Comparativa")
+            st.dataframe(styled_comparacao, use_container_width=False, height=600)
+
+            @st.cache_data
+            def convert_df(df):
+                return df.to_csv(index=True).encode('utf-8')
+
+            csv = convert_df(comparacao)
+            st.download_button(
+                label="Baixar Comparação em CSV",
+                data=csv,
+                file_name="comparacao_indices.csv",
+                mime="text/csv",
+            )
             st.write("### Maiores Subidas e Quedas por Gerência")
             for gerencia in gerencias_selecionadas:
                 if gerencia in base_2023_alinhada.index:
