@@ -59,11 +59,6 @@ tab1, tab2 = st.tabs(["Comparação de Índices", "Ficha Resumida"])
 
 # Aba 1: Comparação de Índices
 with tab1:
-    if base_2023 is not None:
-        base_2023 = padronizar_colunas(base_2023)
-    if base_2024 is not None:
-        base_2024 = padronizar_colunas(base_2024)
-
     if base_2023 is not None and base_2024 is not None:
         st.write("### Dados da Comparação de Índices")
 
@@ -98,59 +93,42 @@ with tab1:
             base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
             base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
 
-            # Concatenar as tabelas e verificar colunas
             comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
 
-            st.write("### Prévia das Colunas Disponíveis:")
-            st.write(comparacao.columns.tolist())
+            # Ordenar colunas por ano primeiro e depois por gerência
+            colunas_ordenadas = sorted(comparacao.columns, key=lambda x: (x.split('(')[1], x.split('(')[0]))
+            comparacao = comparacao[colunas_ordenadas]
 
-            # Ordenar alternando entre anos para a mesma afirmativa
-            colunas_ordenadas = []
-            for afirmativa in afirmativas_selecionadas:
-                for ano in anos_selecionados:
-                    coluna = f"{afirmativa} ({ano})"
-                    if coluna in comparacao.columns:
-                        colunas_ordenadas.append(coluna)
+            comparacao.replace("**", 0, inplace=True)
+            comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
 
-            if colunas_ordenadas:
-                comparacao = comparacao[colunas_ordenadas]
+            def highlight_and_center(val):
+                color = 'color: red;' if val < 70 else ''
+                return f"{color} text-align: center;"
 
-                comparacao.replace("**", 0, inplace=True)
-                comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
+            styled_comparacao = comparacao.style.applymap(highlight_and_center).set_table_styles([
+                dict(selector='th', props=[('text-align', 'center')])
+            ])
 
-                def highlight_and_center(val):
-                    try:
-                        val = float(val)  # Tentar converter o valor para número
-                        color = 'color: red;' if val < 70 else ''
-                        return f"{color} text-align: center;"
-                    except (ValueError, TypeError):
-                        return 'text-align: center;'  # Centralizar valores não numéricos também
+            st.write("### Tabela Comparativa")
+            st.dataframe(styled_comparacao, use_container_width=False, height=600)
 
-                styled_comparacao = comparacao.style.applymap(highlight_and_center).set_table_styles([
-                    dict(selector='th', props=[('text-align', 'center')]),
-                    dict(selector='td', props=[('text-align', 'center')])
-                ])
+            @st.cache_data
+            def convert_df(df):
+                return df.to_csv(index=True).encode('utf-8')
 
-                st.write("### Tabela Comparativa")
-                st.dataframe(styled_comparacao, use_container_width=False, height=600)
-
-                @st.cache_data
-                def convert_df(df):
-                    return df.to_csv(index=True).encode('utf-8')
-
-                csv = convert_df(comparacao)
-                st.download_button(
-                    label="Baixar Comparação em CSV",
-                    data=csv,
-                    file_name="comparacao_indices.csv",
-                    mime="text/csv",
-                )
-            else:
-                st.write("Nenhuma coluna correspondente encontrada para a seleção realizada.")
+            csv = convert_df(comparacao)
+            st.download_button(
+                label="Baixar Comparação em CSV",
+                data=csv,
+                file_name="comparacao_indices.csv",
+                mime="text/csv",
+            )
         else:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
 
 # Aba 2: Ficha Resumida
 with tab2:
