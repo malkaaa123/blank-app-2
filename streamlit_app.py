@@ -131,7 +131,7 @@ with tab1:
 
             # Garantir que os dados são numéricos antes de calcular subidas e quedas
             deltas_mean = deltas.mean(axis=0)
-            deltas_mean = deltas_mean[pd.to_numeric(deltas_mean, errors='coerce').notnull()]
+            deltas_mean = pd.to_numeric(deltas_mean, errors='coerce').dropna()
 
             # Obter as 5 maiores quedas e subidas
             maiores_quedas = deltas_mean.nsmallest(5)
