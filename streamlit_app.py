@@ -101,8 +101,12 @@ with tab1:
             comparacao = comparacao[colunas_selecionadas]
 
             def highlight_and_center(val):
-                color = 'color: red;' if val < 70 else ''
-                return f"{color} text-align: center;"
+                try:
+                    val = float(val)  # Tentar converter o valor para número
+                    color = 'color: red;' if val < 70 else ''
+                    return f"{color} text-align: center;"
+                except (ValueError, TypeError):
+                    return ''  # Retornar estilo vazio para valores não numéricos
 
             styled_comparacao = comparacao.style.applymap(highlight_and_center).set_table_styles([
                 dict(selector='th', props=[('text-align', 'center')])
