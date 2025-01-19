@@ -11,17 +11,21 @@ st.title("Análise de Pesquisa de Clima Organizacional")
 st.sidebar.header("Carregue as Planilhas")
 base_2023_file = st.sidebar.file_uploader("Upload Planilha 2023", type=["xlsx", "csv"])
 base_2024_file = st.sidebar.file_uploader("Upload Planilha 2024", type=["xlsx", "csv"])
+aba_extra_file = st.sidebar.file_uploader("Upload Planilha de Comentários", type=["xlsx", "csv"])
 ficha_file = st.sidebar.file_uploader("Upload Planilha Ficha", type=["xlsx", "csv"])
 
 # Variáveis para armazenar os dados
 base_2023 = None
 base_2024 = None
+planilha_adicional = None
 planilha_ficha = None
 
 if base_2023_file:
     base_2023 = pd.read_excel(base_2023_file) if base_2023_file.name.endswith('xlsx') else pd.read_csv(base_2023_file)
 if base_2024_file:
     base_2024 = pd.read_excel(base_2024_file) if base_2024_file.name.endswith('xlsx') else pd.read_csv(base_2024_file)
+if aba_extra_file:
+    planilha_adicional = pd.read_excel(aba_extra_file) if aba_extra_file.name.endswith('xlsx') else pd.read_csv(aba_extra_file)
 if ficha_file:
     planilha_ficha = pd.read_excel(ficha_file) if ficha_file.name.endswith('xlsx') else pd.read_csv(ficha_file)
 
@@ -87,6 +91,61 @@ with tab2:
                     for item, valor in melhorias.items():
                         st.markdown(f"<p style='color:green'>{item}: {valor:.2f}</p>", unsafe_allow_html=True)
 
+# Aba 3: Comentários
+with tab3:
+    if planilha_adicional is not None:
+        st.write("### Dados dos Comentários")
+
+        # Filtros de gerência, pergunta, palavra-chave e busca livre
+        gerencias_extra = planilha_adicional.iloc[:, 0].unique()
+        perguntas_extra = planilha_adicional.iloc[:, 1].unique()
+
+        selecionar_todas_gerencias_extra = st.checkbox("Selecionar Todas as Gerências", key="extra_gerencias")
+        if selecionar_todas_gerencias_extra:
+            gerencia_selecionada_extra = list(gerencias_extra)
+        else:
+            gerencia_selecionada_extra = st.multiselect("Selecione Gerências", gerencias_extra, default=[])
+
+        selecionar_todas_perguntas_extra = st.checkbox("Selecionar Todas as Perguntas")
+        if selecionar_todas_perguntas_extra:
+            pergunta_selecionada_extra = list(perguntas_extra)
+        else:
+            pergunta_selecionada_extra = st.multiselect("Selecione Perguntas", perguntas_extra, default=[])
+
+        busca_livre = st.text_input("Busca Livre por Palavras-Chave", value="")
+
+        # Filtrar os dados
+        if gerencia_selecionada_extra and pergunta_selecionada_extra:
+            planilha_filtrada = planilha_adicional[
+                (planilha_adicional.iloc[:, 0].isin(gerencia_selecionada_extra)) &
+                (planilha_adicional.iloc[:, 1].isin(pergunta_selecionada_extra))
+            ]
+
+            if busca_livre:
+                planilha_filtrada = planilha_filtrada[planilha_filtrada.iloc[:, 2].str.contains(
+                    busca_livre, case=False, na=False
+                )]
+
+            for index, row in planilha_filtrada.iterrows():
+                with st.expander(f"{row[1]} (Gerência: {row[0]})", expanded=True):
+                    st.write(row[2])
+
+            @st.cache_data
+            def convert_df_extra(df):
+                return df.to_csv(index=False).encode('utf-8')
+
+            csv_extra = convert_df_extra(planilha_filtrada)
+            st.download_button(
+                label="Baixar Planilha Filtrada",
+                data=csv_extra,
+                file_name="comentarios_filtrados.csv",
+                mime="text/csv",
+            )
+        else:
+            st.write("Selecione pelo menos uma Gerência e uma Pergunta para visualizar os dados.")
+    else:
+        st.write("Carregue a planilha de comentários para começar.")
+
 # Aba 4: Maiores quedas/melhorias
 with tab4:
     if base_2023 is not None and base_2024 is not None:
@@ -103,3 +162,4 @@ with tab4:
             st.markdown("**Maiores Melhorias:**")
             for item, valor in melhorias.items():
                 st.markdown(f"<p style='color:green'>{item}: {valor:.2f}</p>", unsafe_allow_html=True)
+
