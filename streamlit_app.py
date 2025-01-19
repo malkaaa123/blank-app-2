@@ -45,55 +45,104 @@ def formatar_adesao(valor):
 # Criação de abas (com "Ficha Resumida" como a segunda aba)
 tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Comentários", "Sentimentos"])
 
+import streamlit as st
+import pandas as pd
+
+# Configuração de layout wide e título da página
+st.set_page_config(layout="wide", page_title="Análise de Clima Organizacional", page_icon="📊")
+
+# Título da aplicação
+st.title("Análise de Pesquisa de Clima Organizacional")
+
+# Upload das planilhas
+st.sidebar.header("Carregue as Planilhas")
+base_2023_file = st.sidebar.file_uploader("Upload Planilha 2023", type=["xlsx", "csv"])
+base_2024_file = st.sidebar.file_uploader("Upload Planilha 2024", type=["xlsx", "csv"])
+aba_extra_file = st.sidebar.file_uploader("Upload Planilha de Comentários", type=["xlsx", "csv"])
+sentimentos_file = st.sidebar.file_uploader("Upload Planilha de Sentimentos", type=["xlsx", "csv"])
+ficha_file = st.sidebar.file_uploader("Upload Planilha Ficha", type=["xlsx", "csv"])
+
+# Variáveis para armazenar os dados
+base_2023 = None
+base_2024 = None
+planilha_adicional = None
+planilha_sentimentos = None
+planilha_ficha = None
+
+if base_2023_file:
+    base_2023 = pd.read_excel(base_2023_file) if base_2023_file.name.endswith('xlsx') else pd.read_csv(base_2023_file)
+if base_2024_file:
+    base_2024 = pd.read_excel(base_2024_file) if base_2024_file.name.endswith('xlsx') else pd.read_csv(base_2024_file)
+if aba_extra_file:
+    planilha_adicional = pd.read_excel(aba_extra_file) if aba_extra_file.name.endswith('xlsx') else pd.read_csv(aba_extra_file)
+if sentimentos_file:
+    planilha_sentimentos = pd.read_excel(sentimentos_file) if sentimentos_file.name.endswith('xlsx') else pd.read_csv(sentimentos_file)
+if ficha_file:
+    planilha_ficha = pd.read_excel(ficha_file) if ficha_file.name.endswith('xlsx') else pd.read_csv(ficha_file)
+
+# Função para tratar valores de adesão como porcentagem
+def formatar_adesao(valor):
+    try:
+        if isinstance(valor, str) and '%' in valor:
+            return float(valor.replace('%', '').strip())
+        return float(valor)
+    except:
+        return None
+
+# Criação de abas
+tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Comentários", "Sentimentos"])
+
 # Aba 1: Comparação de Índices
-if base_2023 is not None and base_2024 is not None:
-    st.write("### Dados da Comparação de Índices")
+with tab1:
+    if base_2023 is not None and base_2024 is not None:
+        st.write("### Dados da Comparação de Índices")
 
-    gerencias = base_2023.iloc[:, 0].unique()
-    afirmativas = base_2023.columns[1:].tolist()
+        gerencias = base_2023.iloc[:, 0].unique()
+        afirmativas = base_2023.columns[1:].tolist()
 
-    selecionar_todas_gerencias = st.checkbox("Selecionar Todas as Gerências")
-    if selecionar_todas_gerencias:
-        gerencias_selecionadas = list(gerencias)
-    else:
-        gerencias_selecionadas = st.multiselect("Selecione Gerências", gerencias, default=[])
+        selecionar_todas_gerencias = st.checkbox("Selecionar Todas as Gerências")
+        if selecionar_todas_gerencias:
+            gerencias_selecionadas = list(gerencias)
+        else:
+            gerencias_selecionadas = st.multiselect("Selecione Gerências", gerencias, default=[])
 
-    selecionar_todas_afirmativas = st.checkbox("Selecionar Todas as Afirmativas")
-    if selecionar_todas_afirmativas:
-        afirmativas_selecionadas = afirmativas
-    else:
-        afirmativas_selecionadas = st.multiselect("Selecione Afirmativas", afirmativas, default=[])
+        selecionar_todas_afirmativas = st.checkbox("Selecionar Todas as Afirmativas")
+        if selecionar_todas_afirmativas:
+            afirmativas_selecionadas = afirmativas
+        else:
+            afirmativas_selecionadas = st.multiselect("Selecione Afirmativas", afirmativas, default=[])
 
-    anos_disponiveis = ["2023", "2024"]
-    anos_selecionados = st.multiselect("Selecione Anos", anos_disponiveis, default=anos_disponiveis)
+        anos_disponiveis = ["2023", "2024"]
+        anos_selecionados = st.multiselect("Selecione Anos", anos_disponiveis, default=anos_disponiveis)
 
-   if gerencias_selecionadas and afirmativas_selecionadas and anos_selecionados:
-    base_2023_filtrada = base_2023[base_2023.iloc[:, 0].isin(gerencias_selecionadas)]
-    base_2023_filtrada = base_2023_filtrada[[base_2023.columns[0]] + afirmativas_selecionadas]
+        if gerencias_selecionadas and afirmativas_selecionadas and anos_selecionados:
+            base_2023_filtrada = base_2023[base_2023.iloc[:, 0].isin(gerencias_selecionadas)]
+            base_2023_filtrada = base_2023_filtrada[[base_2023.columns[0]] + afirmativas_selecionadas]
 
-    base_2024_filtrada = base_2024[base_2024.iloc[:, 0].isin(gerencias_selecionadas)]
-    base_2024_filtrada = base_2024_filtrada[[base_2024.columns[0]] + afirmativas_selecionadas]
+            base_2024_filtrada = base_2024[base_2024.iloc[:, 0].isin(gerencias_selecionadas)]
+            base_2024_filtrada = base_2024_filtrada[[base_2024.columns[0]] + afirmativas_selecionadas]
 
-    base_2023_transposta = base_2023_filtrada.set_index(base_2023_filtrada.columns[0]).transpose()
-    base_2024_transposta = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]).transpose()
+            base_2023_transposta = base_2023_filtrada.set_index(base_2023_filtrada.columns[0]).transpose()
+            base_2024_transposta = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]).transpose()
 
-    base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
-    base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
+            base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
+            base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
 
-    comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
+            comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
 
-    # Reorganizar as colunas para agrupar gerências com seus anos
-    gerencias_colunas = sorted(set(col.split('(')[0].strip() for col in comparacao.columns))
-    colunas_ordenadas = []
-    for gerencia in gerencias_colunas:
-        colunas_ordenadas.extend(
-            [col for col in comparacao.columns if col.startswith(gerencia)]
-        )
-    comparacao = comparacao[colunas_ordenadas]
+            # Reorganizar as colunas para agrupar gerências com seus anos
+            gerencias_colunas = sorted(set(col.split('(')[0].strip() for col in comparacao.columns))
+            colunas_ordenadas = []
+            for gerencia in gerencias_colunas:
+                colunas_ordenadas.extend(
+                    [col for col in comparacao.columns if col.startswith(gerencia)]
+                )
+            comparacao = comparacao[colunas_ordenadas]
 
-    comparacao.replace("**", 0, inplace=True)
-    comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
- def highlight_and_center(val):
+            comparacao.replace("**", 0, inplace=True)
+            comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
+
+            def highlight_and_center(val):
                 color = 'color: red;' if val < 70 else ''
                 return f"{color} text-align: center;"
 
@@ -115,64 +164,12 @@ if base_2023 is not None and base_2024 is not None:
                 file_name="comparacao_indices.csv",
                 mime="text/csv",
             )
-            st.write("### Maiores Subidas e Quedas por Gerência")
-            for gerencia in gerencias_selecionadas:
-                if gerencia in base_2023_alinhada.index:
-                    deltas_gerencia = deltas.loc[gerencia]
-
-                    # Garantir que apenas valores numéricos sejam considerados
-                    deltas_gerencia = pd.to_numeric(deltas_gerencia, errors='coerce').dropna()
-
-                    # Calcular as 5 maiores subidas e quedas
-                    maiores_quedas = deltas_gerencia.nsmallest(5)
-                    maiores_subidas = deltas_gerencia.nlargest(5)
-
-                    # Exibir tabelas com subidas e quedas
-                    st.subheader(f"Gerência: {gerencia}")
-                    tabelas = [
-                        {"Tipo": "Queda", "Afirmativa": afirmativa, "Diferença (%)": round(delta)}
-                        for afirmativa, delta in maiores_quedas.items()
-                    ] + [
-                        {"Tipo": "Subida", "Afirmativa": afirmativa, "Diferença (%)": round(delta)}
-                        for afirmativa, delta in maiores_subidas.items()
-                    ]
-
-                    df_tabelas = pd.DataFrame(tabelas)
-
-                    # Exibir tabela estilizada
-                    st.table(df_tabelas.style.format({"Diferença (%)": "{:.0f}%"}))
-
-            st.write("### Destaques por Gerência (Opcional)")
-            for gerencia in gerencias_selecionadas:
-                if gerencia in base_2023_alinhada.index:
-                    deltas_gerencia = deltas.loc[gerencia]
-
-                    # Garantir que apenas valores numéricos sejam considerados
-                    deltas_gerencia = pd.to_numeric(deltas_gerencia, errors='coerce').dropna()
-
-                    # Destacar a maior queda e maior subida
-                    maior_queda = deltas_gerencia.nsmallest(1)
-                    maior_subida = deltas_gerencia.nlargest(1)
-
-                    st.subheader(f"Gerência: {gerencia}")
-                    col1, col2 = st.columns(2)
-
-                    with col1:
-                        st.markdown("#### Maior Queda")
-                        for afirmativa, delta in maior_queda.items():
-                            st.error(f"**{afirmativa}**: -{round(delta)}%")
-
-                    with col2:
-                        st.markdown("#### Maior Subida")
-                        for afirmativa, delta in maior_subida.items():
-                            st.success(f"**{afirmativa}**: +{round(delta)}%")
 
         else:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
 
-        
 # Aba 2: Ficha Resumida
 
 with tab2:
