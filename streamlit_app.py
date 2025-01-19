@@ -44,8 +44,6 @@ def formatar_adesao(valor):
 
 # Criação de abas (com "Ficha Resumida" como a segunda aba)
 tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Comentários", "Sentimentos"])
-
-
 # Aba 1: Comparação de Índices
 with tab1:
     if base_2023 is not None and base_2024 is not None:
@@ -131,9 +129,13 @@ with tab1:
             # Cálculo das diferenças entre 2023 e 2024
             deltas = base_2024_alinhada - base_2023_alinhada
 
+            # Garantir que os dados são numéricos antes de calcular subidas e quedas
+            deltas_mean = deltas.mean(axis=0)
+            deltas_mean = deltas_mean[pd.to_numeric(deltas_mean, errors='coerce').notnull()]
+
             # Obter as 5 maiores quedas e subidas
-            maiores_quedas = deltas.mean(axis=0).nsmallest(5)
-            maiores_subidas = deltas.mean(axis=0).nlargest(5)
+            maiores_quedas = deltas_mean.nsmallest(5)
+            maiores_subidas = deltas_mean.nlargest(5)
 
             # Exibir as maiores quedas e subidas
             st.write("### Maiores Subidas e Quedas")
