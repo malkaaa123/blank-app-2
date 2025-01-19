@@ -138,8 +138,8 @@ if base_2023_alinhada is not None and deltas is not None:
 else:
     st.warning("As variáveis necessárias para o cálculo das subidas e quedas não foram definidas.")
 
-else:
-    st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+    else:
+        st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
 
 # Aba 2: Ficha Resumida
 
