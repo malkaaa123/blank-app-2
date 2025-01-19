@@ -110,34 +110,36 @@ with tab1:
                 mime="text/csv",
             )
 
-  # Exibir Maiores Subidas e Quedas por Gerência
-            st.write("### Maiores Subidas e Quedas por Gerência")
-            for gerencia in gerencias_selecionadas:
-                if gerencia in base_2023_alinhada.index:
-                    deltas_gerencia = deltas.loc[gerencia]
+# Exibir Maiores Subidas e Quedas por Gerência
+st.write("### Maiores Subidas e Quedas por Gerência")
 
-                    # Garantir que apenas valores numéricos sejam considerados
-                    deltas_gerencia = pd.to_numeric(deltas_gerencia, errors='coerce').dropna()
+# Verificar se as variáveis necessárias estão definidas
+if 'base_2023_alinhada' in locals() and 'deltas' in locals():
+    for gerencia in gerencias_selecionadas:
+        if gerencia in base_2023_alinhada.index:
+            deltas_gerencia = deltas.loc[gerencia]
 
-                    # Calcular as 5 maiores subidas e quedas
-                    maiores_quedas = deltas_gerencia.nsmallest(5)
-                    maiores_subidas = deltas_gerencia.nlargest(5)
+            # Garantir que apenas valores numéricos sejam considerados
+            deltas_gerencia = pd.to_numeric(deltas_gerencia, errors='coerce').dropna()
 
-                    st.subheader(f"Gerência: {gerencia}")
+            # Calcular as 5 maiores subidas e quedas
+            maiores_quedas = deltas_gerencia.nsmallest(5)
+            maiores_subidas = deltas_gerencia.nlargest(5)
 
-                    # Exibir maiores quedas
-                    st.markdown("#### Maiores Quedas")
-                    for afirmativa, delta in maiores_quedas.items():
-                        st.error(f"**{afirmativa}**: -{abs(round(delta))}%")
+            st.subheader(f"Gerência: {gerencia}")
 
-                    # Exibir maiores subidas
-                    st.markdown("#### Maiores Subidas")
-                    for afirmativa, delta in maiores_subidas.items():
-                        st.success(f"**{afirmativa}**: +{round(delta)}%")
-        else:
-            st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
-    else:
-        st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+            # Exibir maiores quedas
+            st.markdown("#### Maiores Quedas")
+            for afirmativa, delta in maiores_quedas.items():
+                st.error(f"**{afirmativa}**: -{abs(round(delta))}%")
+
+            # Exibir maiores subidas
+            st.markdown("#### Maiores Subidas")
+            for afirmativa, delta in maiores_subidas.items():
+                st.success(f"**{afirmativa}**: +{round(delta)}%")
+else:
+    st.warning("As variáveis necessárias para o cálculo das subidas e quedas não foram definidas.")
+
 
 # Aba 2: Ficha Resumida
 
