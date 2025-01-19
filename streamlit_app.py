@@ -83,19 +83,14 @@ with tab1:
             base_2023_alinhada = base_2023_alinhada[colunas_comuns]
             base_2024_alinhada = base_2024_alinhada[colunas_comuns]
 
+            # Cálculo das diferenças entre 2023 e 2024
+            deltas = base_2024_alinhada - base_2023_alinhada
+
             # Corrigir a Tabela Comparativa por Afirmativas
+            comparacao = pd.concat(
+                [base_2023_alinhada.add_suffix(" (2023)"), base_2024_alinhada.add_suffix(" (2024)")], axis=1
+            )
             st.write("### Tabela Comparativa por Afirmativas")
-
-            # Criar DataFrame comparativo com nomes consistentes
-            comparacao = base_2023_alinhada.copy()
-            comparacao.columns = [f"{col} (2023)" for col in comparacao.columns]
-            for col in base_2024_alinhada.columns:
-                comparacao[f"{col} (2024)"] = base_2024_alinhada[col]
-
-            # Garantir que os dados sejam numéricos e formatados
-            comparacao = comparacao.apply(pd.to_numeric, errors="coerce").fillna(0).astype(int)
-
-            # Exibir o DataFrame
             st.dataframe(comparacao, use_container_width=True)
 
             # Maiores Subidas e Quedas por Gerência
@@ -370,5 +365,3 @@ with tab4:
             st.write("Selecione pelo menos uma Gerência para visualizar os dados de sentimentos.")
     else:
         st.write("Carregue a planilha de sentimentos para começar.")
-
-    
