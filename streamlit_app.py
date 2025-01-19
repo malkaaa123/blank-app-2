@@ -46,6 +46,7 @@ def formatar_adesao(valor):
 tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Comentários", "Sentimentos"])
 
 # Aba 1: Comparação de Índices
+# Aba 1: Comparação de Índices
 with tab1:
     if base_2023 is not None and base_2024 is not None:
         st.write("### Dados da Comparação de Índices")
@@ -75,46 +76,27 @@ with tab1:
             base_2024_filtrada = base_2024[base_2024.iloc[:, 0].isin(gerencias_selecionadas)]
             base_2024_filtrada = base_2024_filtrada[[base_2024.columns[0]] + afirmativas_selecionadas]
 
-            base_2023_transposta = base_2023_filtrada.set_index(base_2023_filtrada.columns[0]).transpose()
-            base_2024_transposta = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]).transpose()
-
-            base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
-            base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
-
-            comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
-
-            colunas_selecionadas = [col for col in comparacao.columns if any(ano in col for ano in anos_selecionados)]
-            comparacao = comparacao[colunas_selecionadas]
-
-            comparacao.replace("**", 0, inplace=True)
-            comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
-
-            def highlight_and_center(val):
-                color = 'color: red;' if val < 70 else ''
-                return f"{color} text-align: center;"
-
-            styled_comparacao = comparacao.style.applymap(highlight_and_center).set_table_styles([
-                dict(selector='th', props=[('text-align', 'center')])
-            ])
-
-            st.write("### Tabela Comparativa")
-            st.dataframe(styled_comparacao, use_container_width=False, height=600)
-
-            @st.cache_data
-            def convert_df(df):
-                return df.to_csv(index=True).encode('utf-8')
-
-            csv = convert_df(comparacao)
-            st.download_button(
-                label="Baixar Comparação em CSV",
-                data=csv,
-                file_name="comparacao_indices.csv",
-                mime="text/csv",
+            comparacao = pd.merge(
+                base_2023_filtrada.set_index(base_2023_filtrada.columns[0]),
+                base_2024_filtrada.set_index(base_2024_filtrada.columns[0]),
+                left_index=True,
+                right_index=True,
+                suffixes=(" (2023)", " (2024)")
             )
-        else:
-            st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
-    else:
-        st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
+            comparacao.reset_index(inplace=True)
+            comparacao = comparacao.melt(id_vars=comparacao.columns[0], 
+                                         var_name="Ano", 
+                                         value_name="Valor")
+
+            comparacao["Ano Base"] = comparacao["Ano"].str.extract(r'\((\d{4})\)')[0]
+            comparacao.drop(columns=["Ano"], inplace=True)
+
+            comparacao_pivot = comparacao.pivot(index=comparacao.columns[0], 
+                                                columns="Ano Base", 
+                                                values="Valor")
+
+            comparacao_pivot.fillna(0, inplace=0)..because:
 
 # Aba 2: Ficha Resumida
 with tab2:
