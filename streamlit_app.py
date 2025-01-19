@@ -130,36 +130,31 @@ with tab1:
             # Cálculo das diferenças entre 2023 e 2024
             deltas = base_2024_alinhada - base_2023_alinhada
 
-            st.write("### Maiores Subidas e Quedas por Gerência")
-            for gerencia in gerencias_selecionadas:
-                if gerencia in base_2023_alinhada.index:
-                    deltas_gerencia = deltas.loc[gerencia]
+          st.write("### Maiores Destaques por Gerência")
+for gerencia in gerencias_selecionadas:
+    if gerencia in base_2023_alinhada.index:
+        deltas_gerencia = deltas.loc[gerencia]
 
-                    # Garantir que apenas valores numéricos sejam considerados
-                    deltas_gerencia = pd.to_numeric(deltas_gerencia, errors='coerce').dropna()
+        # Garantir que apenas valores numéricos sejam considerados
+        deltas_gerencia = pd.to_numeric(deltas_gerencia, errors='coerce').dropna()
 
-                    # Calcular as 5 maiores subidas e quedas
-                    maiores_quedas = deltas_gerencia.nsmallest(5)
-                    maiores_subidas = deltas_gerencia.nlargest(5)
+        # Destacar a maior queda e maior subida
+        maior_queda = deltas_gerencia.nsmallest(1)
+        maior_subida = deltas_gerencia.nlargest(1)
 
-                    st.subheader(f"Gerência: {gerencia}")
-                    col1, col2 = st.columns(2)
+        st.subheader(f"Gerência: {gerencia}")
+        col1, col2 = st.columns(2)
 
-                    # Exibir maiores quedas
-                    with col1:
-                        st.markdown("#### Maiores Quedas")
-                        for afirmativa, delta in maiores_quedas.items():
-                            valor_2023 = round(base_2023_alinhada.at[gerencia, afirmativa])
-                            valor_2024 = round(base_2024_alinhada.at[gerencia, afirmativa])
-                            st.error(f"**{afirmativa}**: -{round(delta)}% (2023: {valor_2023}%, 2024: {valor_2024}%)")
+        with col1:
+            st.markdown("#### Maior Queda")
+            for afirmativa, delta in maior_queda.items():
+                st.error(f"**{afirmativa}**: -{round(delta)}%")
 
-                    # Exibir maiores subidas
-                    with col2:
-                        st.markdown("#### Maiores Subidas")
-                        for afirmativa, delta in maiores_subidas.items():
-                            valor_2023 = round(base_2023_alinhada.at[gerencia, afirmativa])
-                            valor_2024 = round(base_2024_alinhada.at[gerencia, afirmativa])
-                            st.success(f"**{afirmativa}**: +{round(delta)}% (2023: {valor_2023}%, 2024: {valor_2024}%)")
+        with col2:
+            st.markdown("#### Maior Subida")
+            for afirmativa, delta in maior_subida.items():
+                st.success(f"**{afirmativa}**: +{round(delta)}%")
+
 
         else:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
