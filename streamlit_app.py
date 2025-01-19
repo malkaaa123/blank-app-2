@@ -82,7 +82,7 @@ with tab1:
             base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
             base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
 
-            # Concatenar as tabelas e reorganizar colunas
+            # Garantir que as colunas estejam ordenadas por afirmativa e ano
             comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
             colunas_ordenadas = []
             for afirmativa in afirmativas_selecionadas:
@@ -91,42 +91,46 @@ with tab1:
                     if coluna in comparacao.columns:
                         colunas_ordenadas.append(coluna)
 
-            comparacao = comparacao[colunas_ordenadas]
+            if colunas_ordenadas:
+                comparacao = comparacao[colunas_ordenadas]
 
-            comparacao.replace("**", 0, inplace=True)
-            comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
+                comparacao.replace("**", 0, inplace=True)
+                comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
 
-            def highlight_and_center(val):
-                try:
-                    val = float(val)  # Tentar converter o valor para número
-                    color = 'color: red;' if val < 70 else ''
-                    return f"{color} text-align: center;"
-                except (ValueError, TypeError):
-                    return 'text-align: center;'  # Centralizar valores não numéricos também
+                def highlight_and_center(val):
+                    try:
+                        val = float(val)  # Tentar converter o valor para número
+                        color = 'color: red;' if val < 70 else ''
+                        return f"{color} text-align: center;"
+                    except (ValueError, TypeError):
+                        return 'text-align: center;'  # Centralizar valores não numéricos também
 
-            styled_comparacao = comparacao.style.applymap(highlight_and_center).set_table_styles([
-                dict(selector='th', props=[('text-align', 'center')]),
-                dict(selector='td', props=[('text-align', 'center')])
-            ])
+                styled_comparacao = comparacao.style.applymap(highlight_and_center).set_table_styles([
+                    dict(selector='th', props=[('text-align', 'center')]),
+                    dict(selector='td', props=[('text-align', 'center')])
+                ])
 
-            st.write("### Tabela Comparativa")
-            st.dataframe(styled_comparacao, use_container_width=False, height=600)
+                st.write("### Tabela Comparativa")
+                st.dataframe(styled_comparacao, use_container_width=False, height=600)
 
-            @st.cache_data
-            def convert_df(df):
-                return df.to_csv(index=True).encode('utf-8')
+                @st.cache_data
+                def convert_df(df):
+                    return df.to_csv(index=True).encode('utf-8')
 
-            csv = convert_df(comparacao)
-            st.download_button(
-                label="Baixar Comparação em CSV",
-                data=csv,
-                file_name="comparacao_indices.csv",
-                mime="text/csv",
-            )
+                csv = convert_df(comparacao)
+                st.download_button(
+                    label="Baixar Comparação em CSV",
+                    data=csv,
+                    file_name="comparacao_indices.csv",
+                    mime="text/csv",
+                )
+            else:
+                st.write("Nenhuma coluna correspondente encontrada para a seleção realizada.")
         else:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
 
 # Aba 2: Ficha Resumida
 with tab2:
