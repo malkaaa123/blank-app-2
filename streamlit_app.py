@@ -100,18 +100,22 @@ with tab1:
                     with col1:
                         st.markdown("#### Maiores Quedas")
                         for afirmativa, delta in maiores_quedas.items():
-                            st.error(f"**{afirmativa}**: Queda de {delta:.2f}% (2023: {base_2023_alinhada.at[gerencia, afirmativa]:.2f}%, 2024: {base_2024_alinhada.at[gerencia, afirmativa]:.2f}%)")
+                            st.error(f"**{afirmativa}**: Queda de {delta:.2f}% "
+                                     f"(2023: {base_2023_alinhada.at[gerencia, afirmativa]:.2f}%, "
+                                     f"2024: {base_2024_alinhada.at[gerencia, afirmativa]:.2f}%)")
 
                     # Exibir maiores subidas
                     with col2:
                         st.markdown("#### Maiores Subidas")
                         for afirmativa, delta in maiores_subidas.items():
-                            st.success(f"**{afirmativa}**: Subida de {delta:.2f}% (2023: {base_2023_alinhada.at[gerencia, afirmativa]:.2f}%, 2024: {base_2024_alinhada.at[gerencia, afirmativa]:.2f}%)")
+                            st.success(f"**{afirmativa}**: Subida de {delta:.2f}% "
+                                       f"(2023: {base_2023_alinhada.at[gerencia, afirmativa]:.2f}%, "
+                                       f"2024: {base_2024_alinhada.at[gerencia, afirmativa]:.2f}%)")
+
         else:
             st.write("Selecione pelo menos uma Gerência e uma Afirmativa para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
-
 
 
 
