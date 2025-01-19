@@ -327,10 +327,3 @@ with tab4:
             st.write("Selecione pelo menos uma Gerência para visualizar os dados de sentimentos.")
     else:
         st.write("Carregue a planilha de sentimentos para começar.")
-
-O código acima deu esse erro. O que pode ser?
-
-File "/mount/src/blank-app-2/streamlit_app.py", line 99
-              comparacao_pivot.fillna(0, inplace=0)..because:
-                                                    ^
-SyntaxError: invalid syntax
