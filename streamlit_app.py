@@ -100,8 +100,18 @@ with tab1:
             comparacao.replace("**", 0, inplace=True)
             comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
 
+            # Formatação condicional
+            def formatar_estilo(val):
+                if val < 70:
+                    return "background-color: rgba(255, 0, 0, 0.2);"  # Vermelho claro
+                elif val >= 70:
+                    return "background-color: rgba(0, 255, 0, 0.2);"  # Verde claro
+                return ""
+
+            styled_comparacao = comparacao.style.applymap(formatar_estilo)
+
             st.write("### Tabela Comparativa")
-            st.dataframe(comparacao, use_container_width=False, height=600)
+            st.dataframe(styled_comparacao, use_container_width=False, height=600)
 
             @st.cache_data
             def convert_df(df):
@@ -145,6 +155,7 @@ with tab1:
             st.warning("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
 
 
 # Aba 2: Ficha Resumida
