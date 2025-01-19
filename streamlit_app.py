@@ -48,7 +48,7 @@ tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", 
 # Aba 1: Comparação de Índices
 with tab1:
    # Verificar se os dados foram carregados corretamente
-if base_2023 is not None and base_2024 is not None:
+    if base_2023 is not None and base_2024 is not None:
     st.write("### Dados da Comparação de Índices")
 
     # Obter gerências e afirmativas
