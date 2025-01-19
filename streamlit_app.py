@@ -47,16 +47,16 @@ tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", 
 
 # Aba 1: Comparação de Índices
  if base_2023 is not None and base_2024 is not None:
-        st.write("### Dados da Comparação de Índices")
+    st.write("### Dados da Comparação de Índices")
 
-        gerencias = base_2023.iloc[:, 0].unique()
-        afirmativas = base_2023.columns[1:].tolist()
+    gerencias = base_2023.iloc[:, 0].unique()
+    afirmativas = base_2023.columns[1:].tolist()
 
-        selecionar_todas_gerencias = st.checkbox("Selecionar Todas as Gerências")
-        if selecionar_todas_gerencias:
-            gerencias_selecionadas = list(gerencias)
-        else:
-            gerencias_selecionadas = st.multiselect("Selecione Gerências", gerencias, default=[])
+    selecionar_todas_gerencias = st.checkbox("Selecionar Todas as Gerências")
+    if selecionar_todas_gerencias:
+        gerencias_selecionadas = list(gerencias)
+    else:
+        gerencias_selecionadas = st.multiselect("Selecione Gerências", gerencias, default=[])
 
         selecionar_todas_afirmativas = st.checkbox("Selecionar Todas as Afirmativas")
         if selecionar_todas_afirmativas:
