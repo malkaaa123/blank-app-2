@@ -46,6 +46,7 @@ def formatar_adesao(valor):
 tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Comentários", "Sentimentos"])
 
 # Aba 1: Comparação de Índices
+
  if base_2023 is not None and base_2024 is not None:
         st.write("### Dados da Comparação de Índices")
 
