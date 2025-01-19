@@ -86,8 +86,9 @@ with tab1:
             deltas = base_2024_alinhada - base_2023_alinhada
 
             st.write("### Tabela Comparativa por Afirmativas")
-            comparacao = pd.concat([base_2023_alinhada, base_2024_alinhada], keys=["2023", "2024"], axis=1)
-            st.dataframe(comparacao, use_container_width=False, height=600)
+            comparacao = pd.concat({"2023": base_2023_alinhada, "2024": base_2024_alinhada}, axis=1)
+            comparacao.columns = pd.MultiIndex.from_tuples([(col[0], col[1]) for col in comparacao.columns])
+            st.dataframe(comparacao)
 
             st.write("### Maiores Subidas e Quedas por Gerência")
             for gerencia in gerencias_selecionadas:
@@ -101,46 +102,32 @@ with tab1:
                     maiores_quedas = deltas_gerencia.nsmallest(5)
                     maiores_subidas = deltas_gerencia.nlargest(5)
 
-                    # Criar DataFrame com informações completas
-                    tabelas = [
-                        {
-                            "Tipo": "Queda",
-                            "Afirmativa": afirmativa,
-                            "Diferença (%)": round(delta),
-                            "2023 (%)": round(base_2023_alinhada.at[gerencia, afirmativa]),
-                            "2024 (%)": round(base_2024_alinhada.at[gerencia, afirmativa]),
-                        }
-                        for afirmativa, delta in maiores_quedas.items()
-                    ] + [
-                        {
-                            "Tipo": "Subida",
-                            "Afirmativa": afirmativa,
-                            "Diferença (%)": round(delta),
-                            "2023 (%)": round(base_2023_alinhada.at[gerencia, afirmativa]),
-                            "2024 (%)": round(base_2024_alinhada.at[gerencia, afirmativa]),
-                        }
-                        for afirmativa, delta in maiores_subidas.items()
-                    ]
-
-                    df_tabelas = pd.DataFrame(tabelas)
-
-                    # Estilizar a tabela
-                    def highlight_row(row):
-                        if row["Tipo"] == "Queda":
-                            return ["background-color: #f8d7da; color: #721c24"] * len(row)
-                        else:
-                            return ["background-color: #d4edda; color: #155724"] * len(row)
-
                     st.subheader(f"Gerência: {gerencia}")
-                    st.dataframe(
-                        df_tabelas.style.apply(highlight_row, axis=1)
-                        .format({"Diferença (%)": "{:.0f}%", "2023 (%)": "{:.0f}%", "2024 (%)": "{:.0f}%"})
+                    
+                    # Criar tabela limpa com ícones
+                    tabela_subidas_quedas = pd.DataFrame(
+                        [
+                            {"Afirmativa": afirmativa, "Tipo": "⬇ Queda", "Diferença (%)": round(delta),
+                             "2023 (%)": round(base_2023_alinhada.at[gerencia, afirmativa]),
+                             "2024 (%)": round(base_2024_alinhada.at[gerencia, afirmativa])}
+                            for afirmativa, delta in maiores_quedas.items()
+                        ] +
+                        [
+                            {"Afirmativa": afirmativa, "Tipo": "⬆ Subida", "Diferença (%)": round(delta),
+                             "2023 (%)": round(base_2023_alinhada.at[gerencia, afirmativa]),
+                             "2024 (%)": round(base_2024_alinhada.at[gerencia, afirmativa])}
+                            for afirmativa, delta in maiores_subidas.items()
+                        ]
                     )
+
+                    # Exibir a tabela de forma mais limpa
+                    st.table(tabela_subidas_quedas)
 
         else:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
 
 # Aba 2: Ficha Resumida
 
