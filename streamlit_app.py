@@ -139,10 +139,6 @@ with tab1:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
-
-
-
-
 # Aba 2: Ficha Resumida
 with tab2:
     if planilha_ficha is not None and base_2024 is not None:
