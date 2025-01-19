@@ -46,7 +46,7 @@ def formatar_adesao(valor):
 tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Comentários", "Sentimentos"])
 
 # Aba 1: Comparação de Índices
- if base_2023 is not None and base_2024 is not None:
+if base_2023 is not None and base_2024 is not None:
     st.write("### Dados da Comparação de Índices")
 
     gerencias = base_2023.iloc[:, 0].unique()
@@ -58,18 +58,19 @@ tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", 
     else:
         gerencias_selecionadas = st.multiselect("Selecione Gerências", gerencias, default=[])
 
-        selecionar_todas_afirmativas = st.checkbox("Selecionar Todas as Afirmativas")
-        if selecionar_todas_afirmativas:
-            afirmativas_selecionadas = afirmativas
-        else:
-            afirmativas_selecionadas = st.multiselect("Selecione Afirmativas", afirmativas, default=[])
+    selecionar_todas_afirmativas = st.checkbox("Selecionar Todas as Afirmativas")
+    if selecionar_todas_afirmativas:
+        afirmativas_selecionadas = afirmativas
+    else:
+        afirmativas_selecionadas = st.multiselect("Selecione Afirmativas", afirmativas, default=[])
 
-        anos_disponiveis = ["2023", "2024"]
-        anos_selecionados = st.multiselect("Selecione Anos", anos_disponiveis, default=anos_disponiveis)
+    anos_disponiveis = ["2023", "2024"]
+    anos_selecionados = st.multiselect("Selecione Anos", anos_disponiveis, default=anos_disponiveis)
 
-        if gerencias_selecionadas and afirmativas_selecionadas and anos_selecionados:
-            base_2023_filtrada = base_2023[base_2023.iloc[:, 0].isin(gerencias_selecionadas)]
-            base_2023_filtrada = base_2023_filtrada[[base_2023.columns[0]] + afirmativas_selecionadas]
+    if gerencias_selecionadas and afirmativas_selecionadas and anos_selecionados:
+        base_2023_filtrada = base_2023[base_2023.iloc[:, 0].isin(gerencias_selecionadas)]
+        base_2023_filtrada = base_2023_filtrada[[base_2023.columns[0]] + afirmativas_selecionadas]
+
 
             base_2024_filtrada = base_2024[base_2024.iloc[:, 0].isin(gerencias_selecionadas)]
             base_2024_filtrada = base_2024_filtrada[[base_2024.columns[0]] + afirmativas_selecionadas]
