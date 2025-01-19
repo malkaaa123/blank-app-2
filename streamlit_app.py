@@ -86,21 +86,21 @@ with tab1:
             deltas = base_2024_alinhada - base_2023_alinhada
 
            # Corrigir a Tabela Comparativa por Afirmativas
-st.write("### Tabela Comparativa por Afirmativas")
-
-# Criar DataFrame comparativo
-comparacao = base_2023_alinhada.add_suffix(" (2023)").reset_index()
-for col in base_2024_alinhada.columns:
-    comparacao[f"{col} (2024)"] = base_2024_alinhada[col].values
-
-# Garantir que todos os valores são numéricos e limpar o DataFrame
-comparacao = comparacao.apply(pd.to_numeric, errors="coerce", axis=1).fillna(0)
-
-# Garantir que os nomes das colunas sejam simples strings
-comparacao.columns = [str(col) for col in comparacao.columns]
-
-# Exibir o DataFrame no Streamlit
-st.dataframe(comparacao, use_container_width=True, height=600)
+            st.write("### Tabela Comparativa por Afirmativas")
+            
+            # Criar DataFrame comparativo
+            comparacao = base_2023_alinhada.add_suffix(" (2023)").reset_index()
+            for col in base_2024_alinhada.columns:
+                comparacao[f"{col} (2024)"] = base_2024_alinhada[col].values
+            
+            # Garantir que todos os valores são numéricos e limpar o DataFrame
+            comparacao = comparacao.apply(pd.to_numeric, errors="coerce", axis=1).fillna(0)
+            
+            # Garantir que os nomes das colunas sejam simples strings
+            comparacao.columns = [str(col) for col in comparacao.columns]
+            
+            # Exibir o DataFrame no Streamlit
+            st.dataframe(comparacao, use_container_width=True, height=600)
 
 
             st.write("### Maiores Subidas e Quedas por Gerência")
