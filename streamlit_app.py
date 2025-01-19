@@ -107,6 +107,27 @@ with tab1:
             st.write("### Tabela Comparativa")
             st.dataframe(styled_comparacao, use_container_width=False, height=600)
 
+            # Identificar as maiores subidas e quedas
+            deltas = (base_2024_filtrada.set_index(base_2024_filtrada.columns[0]) - 
+                      base_2023_filtrada.set_index(base_2023_filtrada.columns[0]))
+            deltas = deltas.mean(axis=1).sort_values()
+
+            maiores_quedas = deltas.head(5)
+            maiores_subidas = deltas.tail(5)
+
+            st.write("### Maiores Subidas e Quedas")
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.markdown("#### Top 5 Maiores Quedas")
+                for afirmativa, delta in maiores_quedas.items():
+                    st.error(f"**{afirmativa}: {delta:.2f}%**")
+
+            with col2:
+                st.markdown("#### Top 5 Maiores Subidas")
+                for afirmativa, delta in maiores_subidas.items():
+                    st.success(f"**{afirmativa}: {delta:.2f}%**")
+
             @st.cache_data
             def convert_df(df):
                 return df.to_csv(index=True).encode('utf-8')
@@ -122,6 +143,7 @@ with tab1:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
 
 
 
