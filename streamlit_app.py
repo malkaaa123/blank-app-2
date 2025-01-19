@@ -66,7 +66,10 @@ with tab1:
         else:
             afirmativas_selecionadas = st.multiselect("Selecione Afirmativas", afirmativas, default=[])
 
-        if gerencias_selecionadas and afirmativas_selecionadas:
+        anos_disponiveis = ["2023", "2024"]
+        anos_selecionados = st.multiselect("Selecione Anos", anos_disponiveis, default=anos_disponiveis)
+
+        if gerencias_selecionadas and afirmativas_selecionadas and anos_selecionados:
             base_2023_filtrada = base_2023[base_2023.iloc[:, 0].isin(gerencias_selecionadas)]
             base_2023_filtrada = base_2023_filtrada[[base_2023.columns[0]] + afirmativas_selecionadas]
 
@@ -93,6 +96,10 @@ with tab1:
             cols = ["Gerência"] + [col for col in comparacao.columns if col != "Gerência"]
             comparacao = comparacao[cols]
 
+            # Filtrar anos selecionados
+            colunas_selecionadas = ["Gerência"] + [col for col in comparacao.columns if any(ano in col for ano in anos_selecionados)]
+            comparacao = comparacao[colunas_selecionadas]
+
             def highlight_and_center(val):
                 color = 'color: red;' if val < 70 else ''
                 return f"{color} text-align: center;"
@@ -116,9 +123,10 @@ with tab1:
                 mime="text/csv",
             )
         else:
-            st.write("Selecione pelo menos uma Gerência e uma Afirmativa para visualizar os dados.")
+            st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
 # Aba 2: Ficha Resumida
 with tab2:
     if planilha_ficha is not None and base_2024 is not None:
