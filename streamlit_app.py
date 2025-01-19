@@ -45,15 +45,27 @@ def formatar_adesao(valor):
 # Criação de abas (com "Ficha Resumida" como a segunda aba)
 tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Comentários", "Sentimentos"])
 
+# Função para padronizar nomes de colunas
+def padronizar_colunas(df):
+    if df is not None and not df.empty:
+        df.columns = [
+            re.sub(r'[^a-zA-Z0-9]', '_', unicodedata.normalize('NFKD', col).encode('ASCII', 'ignore').decode('utf-8'))
+            for col in df.columns
+        ]
+    return df
+
+# Criação de abas (com "Ficha Resumida" como a segunda aba)
+tab1, tab2 = st.tabs(["Comparação de Índices", "Ficha Resumida"])
 
 # Aba 1: Comparação de Índices
 with tab1:
+    if base_2023 is not None:
+        base_2023 = padronizar_colunas(base_2023)
+    if base_2024 is not None:
+        base_2024 = padronizar_colunas(base_2024)
+
     if base_2023 is not None and base_2024 is not None:
         st.write("### Dados da Comparação de Índices")
-
-        # Padronizar colunas
-        base_2023 = padronizar_colunas(base_2023)
-        base_2024 = padronizar_colunas(base_2024)
 
         gerencias = base_2023.iloc[:, 0].unique()
         afirmativas = base_2023.columns[1:].tolist()
@@ -139,6 +151,7 @@ with tab1:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
 # Aba 2: Ficha Resumida
 with tab2:
     if planilha_ficha is not None and base_2024 is not None:
