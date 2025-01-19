@@ -82,10 +82,14 @@ with tab1:
             base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
             base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
 
-            comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
+            # Reordenar colunas para alternar por afirmativa e ano
+            colunas_ordenadas = []
+            for col in afirmativas_selecionadas:
+                if f"{col} (2023)" in base_2023_transposta.columns and f"{col} (2024)" in base_2024_transposta.columns:
+                    colunas_ordenadas.append(f"{col} (2023)")
+                    colunas_ordenadas.append(f"{col} (2024)")
 
-            colunas_selecionadas = [col for col in comparacao.columns if any(ano in col for ano in anos_selecionados)]
-            comparacao = comparacao[colunas_selecionadas]
+            comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)[colunas_ordenadas]
 
             comparacao.replace("**", 0, inplace=True)
             comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
@@ -96,10 +100,11 @@ with tab1:
                     color = 'color: red;' if val < 70 else ''
                     return f"{color} text-align: center;"
                 except (ValueError, TypeError):
-                    return ''  # Retornar estilo vazio para valores não numéricos
+                    return 'text-align: center;'  # Centralizar valores não numéricos também
 
             styled_comparacao = comparacao.style.applymap(highlight_and_center).set_table_styles([
-                dict(selector='th', props=[('text-align', 'center')])
+                dict(selector='th', props=[('text-align', 'center')]),
+                dict(selector='td', props=[('text-align', 'center')])
             ])
 
             st.write("### Tabela Comparativa")
@@ -120,6 +125,7 @@ with tab1:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
 
 # Aba 2: Ficha Resumida
 with tab2:
