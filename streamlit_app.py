@@ -69,6 +69,7 @@ with tab1:
         anos_selecionados = st.multiselect("Selecione Anos", anos_disponiveis, default=anos_disponiveis)
 
         if gerencias_selecionadas and afirmativas_selecionadas and anos_selecionados:
+            # Filtrar os dados
             base_2023_filtrada = base_2023[base_2023.iloc[:, 0].isin(gerencias_selecionadas)]
             base_2023_filtrada = base_2023_filtrada[[base_2023.columns[0]] + afirmativas_selecionadas]
 
@@ -85,11 +86,14 @@ with tab1:
             # Cálculo das diferenças entre 2023 e 2024
             deltas = base_2024_alinhada - base_2023_alinhada
 
+            # Corrigir a Tabela Comparativa por Afirmativas
+            comparacao = pd.concat(
+                [base_2023_alinhada.add_suffix(" (2023)"), base_2024_alinhada.add_suffix(" (2024)")], axis=1
+            )
             st.write("### Tabela Comparativa por Afirmativas")
-            comparacao = pd.concat({"2023": base_2023_alinhada, "2024": base_2024_alinhada}, axis=1)
-            comparacao.columns = pd.MultiIndex.from_tuples([(col[0], col[1]) for col in comparacao.columns])
-            st.dataframe(comparacao)
+            st.dataframe(comparacao, use_container_width=True)
 
+            # Maiores Subidas e Quedas por Gerência
             st.write("### Maiores Subidas e Quedas por Gerência")
             for gerencia in gerencias_selecionadas:
                 if gerencia in base_2023_alinhada.index:
@@ -103,31 +107,52 @@ with tab1:
                     maiores_subidas = deltas_gerencia.nlargest(5)
 
                     st.subheader(f"Gerência: {gerencia}")
-                    
-                    # Criar tabela limpa com ícones
-                    tabela_subidas_quedas = pd.DataFrame(
-                        [
-                            {"Afirmativa": afirmativa, "Tipo": "⬇ Queda", "Diferença (%)": round(delta),
-                             "2023 (%)": round(base_2023_alinhada.at[gerencia, afirmativa]),
-                             "2024 (%)": round(base_2024_alinhada.at[gerencia, afirmativa])}
-                            for afirmativa, delta in maiores_quedas.items()
-                        ] +
-                        [
-                            {"Afirmativa": afirmativa, "Tipo": "⬆ Subida", "Diferença (%)": round(delta),
-                             "2023 (%)": round(base_2023_alinhada.at[gerencia, afirmativa]),
-                             "2024 (%)": round(base_2024_alinhada.at[gerencia, afirmativa])}
-                            for afirmativa, delta in maiores_subidas.items()
-                        ]
+
+                    # Criar DataFrame com informações de quedas
+                    tabela_quedas = pd.DataFrame(
+                        {
+                            "Afirmativa": maiores_quedas.index,
+                            "Diferença (%)": maiores_quedas.values,
+                            "2023 (%)": base_2023_alinhada.loc[gerencia, maiores_quedas.index].values,
+                            "2024 (%)": base_2024_alinhada.loc[gerencia, maiores_quedas.index].values,
+                        }
                     )
 
-                    # Exibir a tabela de forma mais limpa
-                    st.table(tabela_subidas_quedas)
+                    # Criar DataFrame com informações de subidas
+                    tabela_subidas = pd.DataFrame(
+                        {
+                            "Afirmativa": maiores_subidas.index,
+                            "Diferença (%)": maiores_subidas.values,
+                            "2023 (%)": base_2023_alinhada.loc[gerencia, maiores_subidas.index].values,
+                            "2024 (%)": base_2024_alinhada.loc[gerencia, maiores_subidas.index].values,
+                        }
+                    )
+
+                    # Estilizar as tabelas
+                    def highlight_differences(val):
+                        color = "red" if val < 0 else "green"
+                        return f"color: {color};"
+
+                    # Exibir quedas
+                    st.markdown("#### Maiores Quedas")
+                    st.dataframe(
+                        tabela_quedas.style.format(
+                            {"Diferença (%)": "{:.0f}%", "2023 (%)": "{:.0f}%", "2024 (%)": "{:.0f}%"}
+                        ).applymap(highlight_differences, subset=["Diferença (%)"])
+                    )
+
+                    # Exibir subidas
+                    st.markdown("#### Maiores Subidas")
+                    st.dataframe(
+                        tabela_subidas.style.format(
+                            {"Diferença (%)": "{:.0f}%", "2023 (%)": "{:.0f}%", "2024 (%)": "{:.0f}%"}
+                        ).applymap(highlight_differences, subset=["Diferença (%)"])
+                    )
 
         else:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
-
 
 # Aba 2: Ficha Resumida
 
