@@ -82,8 +82,12 @@ with tab1:
             base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
             base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
 
-            # Garantir que as colunas estejam ordenadas por afirmativa e ano
+            # Concatenar as tabelas e verificar colunas
             comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
+
+            st.write("### Prévia das Colunas Disponíveis:")
+            st.write(comparacao.columns.tolist())
+
             colunas_ordenadas = []
             for afirmativa in afirmativas_selecionadas:
                 for ano in anos_selecionados:
