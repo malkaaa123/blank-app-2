@@ -82,15 +82,16 @@ with tab1:
             base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
             base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
 
-            # Reordenar colunas para alternar por afirmativa e ano
+            # Concatenar as tabelas e reorganizar colunas
+            comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
             colunas_ordenadas = []
-            for col in afirmativas_selecionadas:
-                if f"{col} (2023)" in base_2023_transposta.columns:
-                    colunas_ordenadas.append(f"{col} (2023)")
-                if f"{col} (2024)" in base_2024_transposta.columns:
-                    colunas_ordenadas.append(f"{col} (2024)")
+            for afirmativa in afirmativas_selecionadas:
+                for ano in anos_selecionados:
+                    coluna = f"{afirmativa} ({ano})"
+                    if coluna in comparacao.columns:
+                        colunas_ordenadas.append(coluna)
 
-            comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)[colunas_ordenadas]
+            comparacao = comparacao[colunas_ordenadas]
 
             comparacao.replace("**", 0, inplace=True)
             comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
@@ -126,8 +127,6 @@ with tab1:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
-
-
 
 # Aba 2: Ficha Resumida
 with tab2:
