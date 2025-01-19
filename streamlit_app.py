@@ -88,6 +88,7 @@ with tab1:
             st.write("### Prévia das Colunas Disponíveis:")
             st.write(comparacao.columns.tolist())
 
+            # Ordenar alternando entre anos para a mesma afirmativa
             colunas_ordenadas = []
             for afirmativa in afirmativas_selecionadas:
                 for ano in anos_selecionados:
@@ -134,6 +135,7 @@ with tab1:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
 
 
 # Aba 2: Ficha Resumida
