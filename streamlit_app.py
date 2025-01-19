@@ -89,6 +89,11 @@ with tab1:
             for gerencia in gerencias_selecionadas:
                 if gerencia in base_2023_alinhada.index:
                     deltas_gerencia = deltas.loc[gerencia]
+
+                    # Garantir que apenas valores numéricos sejam considerados
+                    deltas_gerencia = pd.to_numeric(deltas_gerencia, errors='coerce').dropna()
+
+                    # Calcular as 5 maiores subidas e quedas
                     maiores_quedas = deltas_gerencia.nsmallest(5)
                     maiores_subidas = deltas_gerencia.nlargest(5)
 
@@ -115,6 +120,7 @@ with tab1:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
 
 
 # Aba 2: Ficha Resumida
