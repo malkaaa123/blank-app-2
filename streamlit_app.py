@@ -45,17 +45,6 @@ def formatar_adesao(valor):
 # Criação de abas (com "Ficha Resumida" como a segunda aba)
 tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Comentários", "Sentimentos"])
 
-# Função para padronizar nomes de colunas
-def padronizar_colunas(df):
-    if df is not None and not df.empty:
-        df.columns = [
-            re.sub(r'[^a-zA-Z0-9]', '_', unicodedata.normalize('NFKD', col).encode('ASCII', 'ignore').decode('utf-8'))
-            for col in df.columns
-        ]
-    return df
-
-# Criação de abas (com "Ficha Resumida" como a segunda aba)
-tab1, tab2 = st.tabs(["Comparação de Índices", "Ficha Resumida"])
 
 # Aba 1: Comparação de Índices
 with tab1:
@@ -340,3 +329,5 @@ with tab4:
             st.write("Selecione pelo menos uma Gerência para visualizar os dados de sentimentos.")
     else:
         st.write("Carregue a planilha de sentimentos para começar.")
+
+    
