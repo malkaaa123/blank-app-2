@@ -40,10 +40,26 @@ def formatar_adesao(valor):
 
 # Função para calcular as maiores quedas e melhorias
 def calcular_variacoes(base_2023, base_2024):
-    variacao = base_2024.set_index(base_2024.columns[0]) - base_2023.set_index(base_2023.columns[0])
-    maiores_quedas = variacao.min().sort_values().head(5)
-    maiores_melhorias = variacao.max().sort_values(ascending=False).head(5)
-    return maiores_quedas, maiores_melhorias
+    try:
+        base_2023 = base_2023.set_index(base_2023.columns[0])
+        base_2024 = base_2024.set_index(base_2024.columns[0])
+
+        # Garantir que as colunas são compatíveis
+        common_columns = base_2023.columns.intersection(base_2024.columns)
+        base_2023 = base_2023[common_columns]
+        base_2024 = base_2024[common_columns]
+
+        # Garantir que os índices são compatíveis
+        base_2023 = base_2023.reindex(base_2024.index).fillna(0)
+        base_2024 = base_2024.reindex(base_2023.index).fillna(0)
+
+        variacao = base_2024 - base_2023
+        maiores_quedas = variacao.min().sort_values().head(5)
+        maiores_melhorias = variacao.max().sort_values(ascending=False).head(5)
+        return maiores_quedas, maiores_melhorias
+    except Exception as e:
+        st.error(f"Erro ao calcular variações: {e}")
+        return pd.Series(dtype='float64'), pd.Series(dtype='float64')
 
 # Criação de abas (com "Ficha Resumida" como a segunda aba)
 tab1, tab2, tab3, tab4 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Comentários", "Maiores quedas/melhorias"])
@@ -162,4 +178,3 @@ with tab4:
             st.markdown("**Maiores Melhorias:**")
             for item, valor in melhorias.items():
                 st.markdown(f"<p style='color:green'>{item}: {valor:.2f}</p>", unsafe_allow_html=True)
-
