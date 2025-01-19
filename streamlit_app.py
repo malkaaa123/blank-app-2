@@ -327,6 +327,3 @@ with tab4:
             st.write("Selecione pelo menos uma Gerência para visualizar os dados de sentimentos.")
     else:
         st.write("Carregue a planilha de sentimentos para começar.")
-
-        st.markdown("#### Maiores Quedas")
-        st.table(maiores_quedas)
