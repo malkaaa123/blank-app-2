@@ -101,50 +101,48 @@ with tab1:
                     maiores_quedas = deltas_gerencia.nsmallest(5)
                     maiores_subidas = deltas_gerencia.nlargest(5)
 
-                    # Exibir tabelas com subidas e quedas
-                    st.subheader(f"Gerência: {gerencia}")
+                    # Criar DataFrame com informações completas
                     tabelas = [
-                        {"Tipo": "Queda", "Afirmativa": afirmativa, "Diferença (%)": round(delta)}
+                        {
+                            "Tipo": "Queda",
+                            "Afirmativa": afirmativa,
+                            "Diferença (%)": round(delta),
+                            "2023 (%)": round(base_2023_alinhada.at[gerencia, afirmativa]),
+                            "2024 (%)": round(base_2024_alinhada.at[gerencia, afirmativa]),
+                        }
                         for afirmativa, delta in maiores_quedas.items()
                     ] + [
-                        {"Tipo": "Subida", "Afirmativa": afirmativa, "Diferença (%)": round(delta)}
+                        {
+                            "Tipo": "Subida",
+                            "Afirmativa": afirmativa,
+                            "Diferença (%)": round(delta),
+                            "2023 (%)": round(base_2023_alinhada.at[gerencia, afirmativa]),
+                            "2024 (%)": round(base_2024_alinhada.at[gerencia, afirmativa]),
+                        }
                         for afirmativa, delta in maiores_subidas.items()
                     ]
 
                     df_tabelas = pd.DataFrame(tabelas)
 
-                    # Exibir tabela estilizada
-                    st.table(df_tabelas.style.format({"Diferença (%)": "{:.0f}%"}))
-
-            st.write("### Destaques por Gerência (Opcional)")
-            for gerencia in gerencias_selecionadas:
-                if gerencia in base_2023_alinhada.index:
-                    deltas_gerencia = deltas.loc[gerencia]
-
-                    # Garantir que apenas valores numéricos sejam considerados
-                    deltas_gerencia = pd.to_numeric(deltas_gerencia, errors='coerce').dropna()
-
-                    # Destacar a maior queda e maior subida
-                    maior_queda = deltas_gerencia.nsmallest(1)
-                    maior_subida = deltas_gerencia.nlargest(1)
+                    # Estilizar a tabela
+                    def highlight_row(row):
+                        if row["Tipo"] == "Queda":
+                            return ["background-color: #f8d7da; color: #721c24"] * len(row)
+                        else:
+                            return ["background-color: #d4edda; color: #155724"] * len(row)
 
                     st.subheader(f"Gerência: {gerencia}")
-                    col1, col2 = st.columns(2)
-
-                    with col1:
-                        st.markdown("#### Maior Queda")
-                        for afirmativa, delta in maior_queda.items():
-                            st.error(f"**{afirmativa}**: -{round(delta)}%")
-
-                    with col2:
-                        st.markdown("#### Maior Subida")
-                        for afirmativa, delta in maior_subida.items():
-                            st.success(f"**{afirmativa}**: +{round(delta)}%")
+                    st.dataframe(
+                        df_tabelas.style.apply(highlight_row, axis=1)
+                        .format({"Diferença (%)": "{:.0f}%", "2023 (%)": "{:.0f}%", "2024 (%)": "{:.0f}%"})
+                    )
 
         else:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
+# Aba 2: Ficha Resumida
 
 with tab2:
     if planilha_ficha is not None and base_2024 is not None:
