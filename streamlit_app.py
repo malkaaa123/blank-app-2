@@ -51,6 +51,10 @@ with tab1:
     if base_2023 is not None and base_2024 is not None:
         st.write("### Dados da Comparação de Índices")
 
+        # Padronizar colunas
+        base_2023 = padronizar_colunas(base_2023)
+        base_2024 = padronizar_colunas(base_2024)
+
         gerencias = base_2023.iloc[:, 0].unique()
         afirmativas = base_2023.columns[1:].tolist()
 
@@ -135,6 +139,7 @@ with tab1:
             st.write("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
     else:
         st.write("Carregue as planilhas de 2023 e 2024 para iniciar a análise.")
+
 
 
 
