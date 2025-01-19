@@ -13,15 +13,17 @@ base_2023_file = st.sidebar.file_uploader("Upload Planilha 2023", type=["xlsx", 
 base_2024_file = st.sidebar.file_uploader("Upload Planilha 2024", type=["xlsx", "csv"])
 ficha_file = st.sidebar.file_uploader("Upload Planilha Ficha", type=["xlsx", "csv"])
 sentimentos_file = st.sidebar.file_uploader("Upload Planilha de Sentimentos", type=["xlsx", "csv"])
+aba_extra_file = st.sidebar.file_uploader("Upload Planilha de Comentários", type=["xlsx", "csv"])
 
 # Variáveis para armazenar os dados
 base_2023 = pd.read_excel(base_2023_file) if base_2023_file and base_2023_file.name.endswith('xlsx') else (pd.read_csv(base_2023_file) if base_2023_file else None)
 base_2024 = pd.read_excel(base_2024_file) if base_2024_file and base_2024_file.name.endswith('xlsx') else (pd.read_csv(base_2024_file) if base_2024_file else None)
 planilha_ficha = pd.read_excel(ficha_file) if ficha_file and ficha_file.name.endswith('xlsx') else (pd.read_csv(ficha_file) if ficha_file else None)
 planilha_sentimentos = pd.read_excel(sentimentos_file) if sentimentos_file and sentimentos_file.name.endswith('xlsx') else (pd.read_csv(sentimentos_file) if sentimentos_file else None)
+planilha_comentarios = pd.read_excel(aba_extra_file) if aba_extra_file and aba_extra_file.name.endswith('xlsx') else (pd.read_csv(aba_extra_file) if aba_extra_file else None)
 
 # Criação de abas
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Resumo de Flutuações", "Sentimentos", "Flutuações Detalhadas"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Comparação de Índices", "Ficha Resumida", "Resumo de Flutuações", "Comentários", "Sentimentos", "Flutuações Detalhadas"])
 
 # Aba 1: Comparação de Índices
 with tab1:
@@ -35,21 +37,22 @@ with tab1:
         afirmativas_selecionadas = st.multiselect("Selecione Afirmativas", afirmativas, default=afirmativas[:5])
 
         if gerencias_selecionadas and afirmativas_selecionadas:
-            base_2023_filtrada = base_2023[base_2023.iloc[:, 0].isin(gerencias_selecionadas)][[base_2023.columns[0]] + afirmativas_selecionadas]
-            base_2024_filtrada = base_2024[base_2024.iloc[:, 0].isin(gerencias_selecionadas)][[base_2024.columns[0]] + afirmativas_selecionadas]
+            comparacao = pd.DataFrame(columns=["Gerência", "Ano", "Afirmativa", "Valor"])
 
-            # Reorganizar para exibição intercalada
-            comparacao = pd.DataFrame()
             for gerencia in gerencias_selecionadas:
                 for afirmativa in afirmativas_selecionadas:
-                    valor_2023 = base_2023_filtrada[base_2023_filtrada.iloc[:, 0] == gerencia][afirmativa].values[0]
-                    valor_2024 = base_2024_filtrada[base_2024_filtrada.iloc[:, 0] == gerencia][afirmativa].values[0]
-                    comparacao = pd.concat([comparacao, pd.DataFrame({
-                        "Gerência": [gerencia],
-                        "Ano": ["2023", "2024"],
-                        "Afirmativa": [afirmativa, afirmativa],
-                        "Valor": [valor_2023, valor_2024]
-                    })])
+                    valor_2023 = base_2023.loc[base_2023.iloc[:, 0] == gerencia, afirmativa].values
+                    valor_2024 = base_2024.loc[base_2024.iloc[:, 0] == gerencia, afirmativa].values
+                    if len(valor_2023) > 0 and len(valor_2024) > 0:
+                        comparacao = pd.concat([
+                            comparacao,
+                            pd.DataFrame({
+                                "Gerência": [gerencia, gerencia],
+                                "Ano": ["2023", "2024"],
+                                "Afirmativa": [afirmativa, afirmativa],
+                                "Valor": [valor_2023[0], valor_2024[0]],
+                            })
+                        ], ignore_index=True)
 
             st.dataframe(comparacao)
 
@@ -120,13 +123,43 @@ with tab3:
             st.write("### Maiores Quedas Gerais")
             st.table(maiores_quedas_geral)
 
-# Aba 4: Sentimentos
+# Aba 4: Comentários
 with tab4:
+    if planilha_comentarios is not None:
+        st.write("### Dados dos Comentários")
+
+        gerencias_comentarios = planilha_comentarios.iloc[:, 0].unique()
+        perguntas_comentarios = planilha_comentarios.iloc[:, 1].unique()
+
+        gerencias_selecionadas = st.multiselect("Selecione Gerências", gerencias_comentarios)
+        perguntas_selecionadas = st.multiselect("Selecione Perguntas", perguntas_comentarios)
+
+        if gerencias_selecionadas and perguntas_selecionadas:
+            comentarios_filtrados = planilha_comentarios[
+                (planilha_comentarios.iloc[:, 0].isin(gerencias_selecionadas)) &
+                (planilha_comentarios.iloc[:, 1].isin(perguntas_selecionadas))
+            ]
+
+            for _, row in comentarios_filtrados.iterrows():
+                with st.expander(f"{row[1]} (Gerência: {row[0]})"):
+                    st.write(row[2])
+
+            st.download_button(
+                label="Baixar Planilha Filtrada",
+                data=comentarios_filtrados.to_csv(index=False).encode('utf-8'),
+                file_name="comentarios_filtrados.csv",
+                mime="text/csv",
+            )
+    else:
+        st.write("Carregue a planilha de Comentários para começar.")
+
+# Aba 5: Sentimentos
+with tab5:
     if planilha_sentimentos is not None:
         st.write("### Dados de Sentimentos")
 
         gerencias_sentimentos = planilha_sentimentos['gerencia'].unique()
-        gerencias_selecionadas = st.multiselect("Selecione Gerências", gerencias_sentimentos, default=gerencias_sentimentos[:5])
+        gerencias_selecionadas = st.multiselect("Selecione Gerências", gerencias_sentimentos)
 
         if gerencias_selecionadas:
             dados_filtrados = planilha_sentimentos[planilha_sentimentos['gerencia'].isin(gerencias_selecionadas)]
@@ -140,8 +173,3 @@ with tab4:
             )
     else:
         st.write("Carregue a planilha de Sentimentos para começar.")
-
-# Aba 5: Flutuações Detalhadas
-with tab5:
-    st.write("**Criar visualização de flutuações detalhadas aqui.**")
-
