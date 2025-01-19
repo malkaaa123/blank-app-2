@@ -85,8 +85,16 @@ with tab1:
             # Cálculo das diferenças entre 2023 e 2024
             deltas = base_2024_alinhada - base_2023_alinhada
 
+            # Corrigir a Tabela Comparativa por Afirmativas
             st.write("### Tabela Comparativa por Afirmativas")
-            comparacao = pd.concat([base_2023_alinhada, base_2024_alinhada], keys=["2023", "2024"], axis=1)
+            comparacao = base_2023_alinhada.add_suffix(" (2023)")
+            for col in base_2024_alinhada.columns:
+                comparacao[f"{col} (2024)"] = base_2024_alinhada[col]
+
+            # Garantir que todos os valores são numéricos e preencher valores ausentes
+            comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0)
+
+            # Exibir a tabela comparativa
             st.dataframe(comparacao, use_container_width=False, height=600)
 
             st.write("### Maiores Subidas e Quedas por Gerência")
