@@ -67,35 +67,33 @@ if base_2023 is not None and base_2024 is not None:
     anos_disponiveis = ["2023", "2024"]
     anos_selecionados = st.multiselect("Selecione Anos", anos_disponiveis, default=anos_disponiveis)
 
-    if gerencias_selecionadas and afirmativas_selecionadas and anos_selecionados:
-        base_2023_filtrada = base_2023[base_2023.iloc[:, 0].isin(gerencias_selecionadas)]
-        base_2023_filtrada = base_2023_filtrada[[base_2023.columns[0]] + afirmativas_selecionadas]
+   if gerencias_selecionadas and afirmativas_selecionadas and anos_selecionados:
+    base_2023_filtrada = base_2023[base_2023.iloc[:, 0].isin(gerencias_selecionadas)]
+    base_2023_filtrada = base_2023_filtrada[[base_2023.columns[0]] + afirmativas_selecionadas]
 
+    base_2024_filtrada = base_2024[base_2024.iloc[:, 0].isin(gerencias_selecionadas)]
+    base_2024_filtrada = base_2024_filtrada[[base_2024.columns[0]] + afirmativas_selecionadas]
 
-            base_2024_filtrada = base_2024[base_2024.iloc[:, 0].isin(gerencias_selecionadas)]
-            base_2024_filtrada = base_2024_filtrada[[base_2024.columns[0]] + afirmativas_selecionadas]
+    base_2023_transposta = base_2023_filtrada.set_index(base_2023_filtrada.columns[0]).transpose()
+    base_2024_transposta = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]).transpose()
 
-            base_2023_transposta = base_2023_filtrada.set_index(base_2023_filtrada.columns[0]).transpose()
-            base_2024_transposta = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]).transpose()
+    base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
+    base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
 
-            base_2023_transposta.columns = [f"{col} (2023)" for col in base_2023_transposta.columns]
-            base_2024_transposta.columns = [f"{col} (2024)" for col in base_2024_transposta.columns]
+    comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
 
-            comparacao = pd.concat([base_2023_transposta, base_2024_transposta], axis=1)
+    # Reorganizar as colunas para agrupar gerências com seus anos
+    gerencias_colunas = sorted(set(col.split('(')[0].strip() for col in comparacao.columns))
+    colunas_ordenadas = []
+    for gerencia in gerencias_colunas:
+        colunas_ordenadas.extend(
+            [col for col in comparacao.columns if col.startswith(gerencia)]
+        )
+    comparacao = comparacao[colunas_ordenadas]
 
-            # Reorganizar as colunas para agrupar gerências com seus anos
-            gerencias_colunas = sorted(set(col.split('(')[0].strip() for col in comparacao.columns))
-            colunas_ordenadas = []
-            for gerencia in gerencias_colunas:
-                colunas_ordenadas.extend(
-                    [col for col in comparacao.columns if col.startswith(gerencia)]
-                )
-            comparacao = comparacao[colunas_ordenadas]
-
-            comparacao.replace("**", 0, inplace=True)
-            comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
-
-            def highlight_and_center(val):
+    comparacao.replace("**", 0, inplace=True)
+    comparacao = comparacao.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
+ def highlight_and_center(val):
                 color = 'color: red;' if val < 70 else ''
                 return f"{color} text-align: center;"
 
@@ -386,3 +384,5 @@ with tab4:
             st.write("Selecione pelo menos uma Gerência para visualizar os dados de sentimentos.")
     else:
         st.write("Carregue a planilha de sentimentos para começar.")
+
+           
