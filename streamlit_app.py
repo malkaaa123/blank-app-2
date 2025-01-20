@@ -126,7 +126,7 @@ with tab1:
             )
 
             # Cálculo de subidas e quedas
-            st.write("### Maiores Subidas e Quedas por Gerência")
+            st.write("### Maiores Aumentos e Quedas por Gerência")
             deltas = base_2024_filtrada.set_index(base_2024_filtrada.columns[0]) - base_2023_filtrada.set_index(base_2023_filtrada.columns[0])
 
             for gerencia in gerencias_selecionadas:
@@ -138,7 +138,7 @@ with tab1:
 
                     # Calcular as 5 maiores subidas e quedas
                     maiores_quedas = deltas_gerencia.nsmallest(5)
-                    maiores_subidas = deltas_gerencia.nlargest(5)
+                    maiores_aumentos = deltas_gerencia.nlargest(5)
 
                     st.subheader(f"Gerência: {gerencia}")
 
@@ -148,8 +148,8 @@ with tab1:
                         st.error(f"**{afirmativa}**: -{abs(round(delta))}%")
 
                     # Exibir maiores subidas
-                    st.markdown("#### Maiores Subidas")
-                    for afirmativa, delta in maiores_subidas.items():
+                    st.markdown("#### Maiores Aumentos")
+                    for afirmativa, delta in maiores_aumentos.items():
                         st.success(f"**{afirmativa}**: +{round(delta)}%")
         else:
             st.warning("Selecione pelo menos uma Gerência, uma Afirmativa e um Ano para visualizar os dados.")
